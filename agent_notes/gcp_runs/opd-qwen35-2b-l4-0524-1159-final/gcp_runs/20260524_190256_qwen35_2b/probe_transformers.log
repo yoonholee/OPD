@@ -1,0 +1,11 @@
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+[transformers] `torch_dtype` is deprecated! Use `dtype` instead!
+[transformers] The fast path is not available because one of the required library is not installed. Falling back to torch implementation. To install follow https://github.com/fla-org/flash-linear-attention#installation and https://github.com/Dao-AILab/causal-conv1d
+Loading weights:   0%|          | 0/617 [00:00<?, ?it/s]Loading weights:   6%|▋         | 39/617 [00:00<00:01, 341.38it/s]Loading weights:  14%|█▍        | 86/617 [00:00<00:01, 412.49it/s]Loading weights:  21%|██        | 129/617 [00:00<00:01, 415.83it/s]Loading weights:  28%|██▊       | 171/617 [00:00<00:01, 415.31it/s]Loading weights:  35%|███▍      | 213/617 [00:00<00:00, 404.57it/s]Loading weights:  41%|████      | 254/617 [00:00<00:00, 402.83it/s]Loading weights:  49%|████▊     | 300/617 [00:00<00:00, 410.46it/s]Loading weights:  64%|██████▍   | 394/617 [00:00<00:00, 570.75it/s]Loading weights:  88%|████████▊ | 544/617 [00:00<00:00, 847.91it/s]Loading weights: 100%|██████████| 617/617 [00:00<00:00, 618.58it/s]
+[transformers] Setting `pad_token_id` to `eos_token_id`:248044 for open-end generation.
+{
+  "ok": true,
+  "backend": "transformers",
+  "seconds": 37.91,
+  "text": "4\n"
+}

@@ -1,0 +1,60 @@
+Using CPython 3.12.13
+Creating virtual environment at: .venv-clean
+Activate with: source .venv-clean/bin/activate
+Using Python 3.12.13 environment at: .venv-clean
+Resolved 4 packages in 83ms
+Installed 4 packages in 13ms
+ + packaging==26.2
+ + pip==26.1.1
+ + setuptools==82.0.1
+ + wheel==0.47.0
+Obtaining file:///home/yoonholee/forks/EasyR1
+  Checking if build backend supports build_editable: started
+  Checking if build backend supports build_editable: finished with status 'done'
+  Preparing editable metadata (pyproject.toml): started
+  Preparing editable metadata (pyproject.toml): finished with status 'done'
+Collecting accelerate (from verl==0.3.3.dev0)
+  Using cached accelerate-1.13.0-py3-none-any.whl.metadata (19 kB)
+Collecting codetiming (from verl==0.3.3.dev0)
+  Using cached codetiming-1.4.0-py3-none-any.whl.metadata (7.7 kB)
+Collecting datasets (from verl==0.3.3.dev0)
+  Using cached datasets-4.8.5-py3-none-any.whl.metadata (19 kB)
+Collecting flash-attn>=2.4.3 (from verl==0.3.3.dev0)
+  Downloading flash_attn-2.8.3.tar.gz (8.4 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 8.4/8.4 MB 121.2 MB/s  0:00:00
+  Preparing metadata (pyproject.toml): started
+  Preparing metadata (pyproject.toml): finished with status 'error'
+  error: subprocess-exited-with-error
+  
+  × Preparing metadata (pyproject.toml) did not run successfully.
+  │ exit code: 1
+  ╰─> [19 lines of output]
+      /home/yoonholee/forks/EasyR1/.venv-clean/lib/python3.12/site-packages/wheel/bdist_wheel.py:4: FutureWarning: The 'wheel' package is no longer the canonical location of the 'bdist_wheel' command, and will be removed in a future release. Please update to setuptools v70.1 or later which contains an integrated version of this command.
+        warn(
+      Traceback (most recent call last):
+        File "/home/yoonholee/forks/EasyR1/.venv-clean/lib/python3.12/site-packages/pip/_vendor/pyproject_hooks/_in_process/_in_process.py", line 389, in <module>
+          main()
+        File "/home/yoonholee/forks/EasyR1/.venv-clean/lib/python3.12/site-packages/pip/_vendor/pyproject_hooks/_in_process/_in_process.py", line 373, in main
+          json_out["return_val"] = hook(**hook_input["kwargs"])
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        File "/home/yoonholee/forks/EasyR1/.venv-clean/lib/python3.12/site-packages/pip/_vendor/pyproject_hooks/_in_process/_in_process.py", line 175, in prepare_metadata_for_build_wheel
+          return hook(metadata_directory, config_settings)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        File "/home/yoonholee/forks/EasyR1/.venv-clean/lib/python3.12/site-packages/setuptools/build_meta.py", line 380, in prepare_metadata_for_build_wheel
+          self.run_setup()
+        File "/home/yoonholee/forks/EasyR1/.venv-clean/lib/python3.12/site-packages/setuptools/build_meta.py", line 520, in run_setup
+          super().run_setup(setup_script=setup_script)
+        File "/home/yoonholee/forks/EasyR1/.venv-clean/lib/python3.12/site-packages/setuptools/build_meta.py", line 317, in run_setup
+          exec(code, locals())
+        File "<string>", line 22, in <module>
+      ModuleNotFoundError: No module named 'torch'
+      [end of output]
+  
+  note: This error originates from a subprocess, and is likely not a problem with pip.
+error: metadata-generation-failed
+
+× Encountered error while generating package metadata.
+╰─> flash-attn
+
+note: This is an issue with the package mentioned above, not pip.
+hint: See above for details.

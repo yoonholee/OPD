@@ -1,0 +1,261 @@
+84f072bc99a2cd0b740ff9e665e1accf55fb6cf4
+README.md:34:1. Fully asynchronous RL for high-throughput agentic training at scale.
+README.md:35:2. Performant: built to train 1T+ MoE models on 1000+ GPUs with [FSDP2](https://docs.pytorch.org/tutorials/intermediate/FSDP_tutorial.html) for training and [vLLM](https://github.com/vllm-project/vllm) for inference, with FP8 inference, PD disaggregation, EP and CP parallelism, and more.
+README.md:37:4. End-to-end post-training: SFT, RL training, and evals.
+README.md:39:6. Multimodal support for VLMs such as Qwen3-VL.
+README.md:54:| Qwen3.5 MoE (`qwen3_5_moe`) | `Qwen/Qwen3.5-35B-A3B`, … | yes | ✅ | ✅ |
+README.md:55:| Qwen3 / Qwen3.5 VLMs | [multimodal.md](docs/multimodal.md) (`qwen3_vl`, `qwen3_5`, `qwen3_5_moe`) | MoE only on MoE VLMs | MoE only | ✅ |
+README.md:168:5.2. Check that you can run evals against the inference server
+README.md:171:uv run eval @ configs/debug/eval.toml
+README.md:220:- [**Entrypoints**](docs/entrypoints.md) - Overview of the main components (orchestrator, trainer, inference) and how to run SFT, RL, and evals
+README.md:223:- [**Async Training**](docs/async.md) - Understanding asynchronous off-policy training and step semantics
+README.md:230:- [**Multimodal**](docs/multimodal.md) - Training VLMs like Qwen3-VL
+configs/alphabet_sort/rl.toml:24:[orchestrator.eval]
+configs/alphabet_sort/rl.toml:27:[[orchestrator.eval.env]]
+docs/checkpointing.md:11:Checkpointing is configured with the config key `--ckpt`. One can specify the interval (`--ckpt.interval`), whether to save checkpoints asynchronously  (`--ckpt.save-async`), how many recent step checkpoints to keep on disk (`--ckpt.keep-last`), and keep checkpoints at every N steps permanently (`--ckpt.keep-interval`). By default, we do not checkpoint to save disk space. 
+docs/environments.md:3:PRIME-RL can train and evaluate in any [`verifiers`](https://github.com/willccbb/verifiers) environments. To train in a new environment, simply install it from the [Environment Hub](https://app.primeintellect.ai/dashboard/environments) or install a local environment.
+configs/nemotron_debug/rl.toml:62:[orchestrator.eval]
+configs/nemotron_debug/rl.toml:65:[orchestrator.eval.sampling]
+configs/nemotron_debug/rl.toml:68:[[orchestrator.eval.env]]
+configs/ci/integration/reverse_text_rl_sft/start.toml:3:# GPU 0; the teacher inference server is started externally by the test
+configs/ci/integration/reverse_text_rl_sft/start.toml:18:training_mode = "sft"
+configs/ci/integration/reverse_text_rl_sft/start.toml:28:[orchestrator.eval]
+configs/ci/integration/reverse_text_rl_sft/start.toml:32:[orchestrator.eval.sampling]
+configs/ci/integration/reverse_text_rl_sft/start.toml:35:[[orchestrator.eval.env]]
+configs/ci/integration/reverse_text_rl_sft/start.toml:38:[orchestrator.teacher.model]
+configs/ci/integration/reverse_text_rl_sft/start.toml:41:[orchestrator.teacher.client]
+configs/ci/integration/reverse_text_rl_opd/start.toml:3:# the teacher inference server is started externally by the test fixture (see
+configs/ci/integration/reverse_text_rl_opd/start.toml:4:# tests/integration/test_reverse_text_rl_opd.py) on the same GPU. Trainer
+configs/ci/integration/reverse_text_rl_opd/start.toml:15:name = "ci-rl-opd"
+configs/ci/integration/reverse_text_rl_opd/start.toml:18:training_mode = "opd"
+configs/ci/integration/reverse_text_rl_opd/start.toml:31:[orchestrator.eval]
+configs/ci/integration/reverse_text_rl_opd/start.toml:35:[orchestrator.eval.sampling]
+configs/ci/integration/reverse_text_rl_opd/start.toml:38:[[orchestrator.eval.env]]
+configs/ci/integration/reverse_text_rl_opd/start.toml:41:[orchestrator.teacher.model]
+configs/ci/integration/reverse_text_rl_opd/start.toml:44:[orchestrator.teacher.client]
+configs/ci/nightly/acereason_math.toml:5:# - No evals
+docs/mint.json:10:                "training_modes",
+docs/kubernetes.md:210:2. **Inference** (StatefulSet) - Runs vLLM inference server
+docs/kubernetes.md:226:- **Required for distributed training**: PyTorch/vLLM need to discover peers by stable hostname
+configs/nemotron_4node/rl.toml:63:[orchestrator.eval]
+configs/nemotron_4node/rl.toml:66:[orchestrator.eval.sampling]
+configs/nemotron_4node/rl.toml:69:[[orchestrator.eval.env]]
+configs/math_python/README.md:28:uv run --no-sync vf-eval math-python -n 16 -r 1 -c -1 -v -m Qwen/Qwen3-4B-Instruct-2507 -b http://localhost:8000/v1 -a '{"dataset_name": "PrimeIntellect/Hendrycks-Math", "dataset_subset": "default"}' -t 512
+configs/hendrycks_math/README.md:40:uv run vf-eval math-env \
+configs/hendrycks_math/sanity.toml:20:[orchestrator.eval]
+configs/hendrycks_math/sanity.toml:23:[[orchestrator.eval.env]]
+configs/hendrycks_math/rl.toml:27:[orchestrator.eval]
+configs/hendrycks_math/rl.toml:30:[orchestrator.eval.sampling]
+configs/hendrycks_math/rl.toml:33:[[orchestrator.eval.env]]
+configs/multi_reverse_text/rl.toml:27:# -- eval envs --
+configs/multi_reverse_text/rl.toml:29:[orchestrator.eval]
+configs/multi_reverse_text/rl.toml:32:[orchestrator.eval.sampling]
+configs/multi_reverse_text/rl.toml:35:[[orchestrator.eval.env]]
+configs/multi_reverse_text/rl.toml:37:name = "eval-default"
+configs/multi_reverse_text/rl.toml:41:[[orchestrator.eval.env]]
+configs/multi_reverse_text/rl.toml:43:name = "eval-custom"
+configs/multi_reverse_text/rl.toml:48:[orchestrator.eval.env.sampling]
+configs/debug/training_modes/rl.toml:12:training_mode = "rl"
+configs/debug/training_modes/rl.toml:25:[orchestrator.eval]
+configs/debug/training_modes/rl.toml:29:[orchestrator.eval.sampling]
+configs/debug/training_modes/rl.toml:32:[[orchestrator.eval.env]]
+configs/debug/training_modes/opd.toml:1:# Start the teacher inference server first (on a separate GPU):
+configs/debug/training_modes/opd.toml:6:#   uv run rl @ configs/debug/training_modes/opd.toml
+configs/debug/training_modes/opd.toml:16:name = "debug-opd"
+configs/debug/training_modes/opd.toml:19:training_mode = "opd"
+configs/debug/training_modes/opd.toml:32:[orchestrator.eval]
+configs/debug/training_modes/opd.toml:36:[orchestrator.eval.sampling]
+configs/debug/training_modes/opd.toml:39:[[orchestrator.eval.env]]
+configs/debug/training_modes/opd.toml:42:[orchestrator.teacher.model]
+configs/debug/training_modes/opd.toml:45:[orchestrator.teacher.client]
+configs/debug/training_modes/sft_external.toml:5:#   uv run rl @ configs/debug/training_modes/sft_external.toml
+configs/debug/training_modes/sft_external.toml:18:training_mode = "sft"
+configs/debug/training_modes/sft_external.toml:29:[orchestrator.eval]
+configs/debug/training_modes/sft_external.toml:33:[orchestrator.eval.sampling]
+configs/debug/training_modes/sft_external.toml:36:[[orchestrator.eval.env]]
+configs/debug/training_modes/sft_external.toml:39:[orchestrator.teacher.model]
+configs/debug/training_modes/sft_external.toml:42:[orchestrator.teacher.client]
+configs/debug/training_modes/sft_external.toml:46:[orchestrator.teacher.client.headers_from_env]
+configs/debug/training_modes/sft.toml:1:# Start the teacher inference server first (on a separate GPU):
+configs/debug/training_modes/sft.toml:6:#   uv run rl @ configs/debug/training_modes/sft.toml
+configs/debug/training_modes/sft.toml:19:training_mode = "sft"
+configs/debug/training_modes/sft.toml:29:[orchestrator.eval]
+configs/debug/training_modes/sft.toml:33:[orchestrator.eval.sampling]
+configs/debug/training_modes/sft.toml:36:[[orchestrator.eval.env]]
+configs/debug/training_modes/sft.toml:39:[orchestrator.teacher.model]
+configs/debug/training_modes/sft.toml:42:[orchestrator.teacher.client]
+configs/debug/training_modes/README.md:3:Minimal end-to-end configs for the three training modes (`rl` / `opd` / `sft`) against the `reverse-text` env, using `PrimeIntellect/Qwen3-0.6B-Reverse-Text-SFT` as the student.
+configs/debug/training_modes/README.md:8:| `opd.toml` | `opd` | local vLLM (`Qwen3-0.6B-Reverse-Text-RL`) | |
+configs/debug/training_modes/README.md:9:| `opd_lora.toml` | `opd` | local vLLM (`Qwen3-0.6B-Reverse-Text-RL`) | trains a LoRA adapter (rank 8) |
+configs/debug/training_modes/README.md:10:| `sft.toml` | `sft` | local vLLM (`Qwen3-0.6B-Reverse-Text-RL`) | |
+configs/debug/training_modes/README.md:11:| `sft_lora.toml` | `sft` | local vLLM (`Qwen3-0.6B-Reverse-Text-RL`) | trains a LoRA adapter (rank 8) |
+configs/debug/training_modes/README.md:12:| `sft_external.toml` | `sft` | PI inference (`openai/gpt-5-mini`) | external OAI endpoint; no local teacher |
+configs/debug/training_modes/README.md:14:The student inference server is auto-launched on GPU 0 at `http://localhost:8000/v1` with `gpu_memory_utilization=0.5`. The local teacher (used by everything except `rl.toml` and `sft_external.toml`) is **not** auto-launched — start it manually on GPU 1.
+configs/debug/training_modes/README.md:16:## Start the local teacher
+configs/debug/training_modes/README.md:18:Needed for `opd*.toml` and `sft.toml` / `sft_lora.toml`:
+configs/debug/training_modes/README.md:31:# RL (no teacher)
+configs/debug/training_modes/README.md:32:uv run rl @ configs/debug/training_modes/rl.toml
+configs/debug/training_modes/README.md:34:# OPD (needs teacher on port 8001)
+configs/debug/training_modes/README.md:35:uv run rl @ configs/debug/training_modes/opd.toml
+configs/debug/training_modes/README.md:36:uv run rl @ configs/debug/training_modes/opd_lora.toml
+configs/debug/training_modes/README.md:38:# SFT hard distill (needs teacher on port 8001)
+configs/debug/training_modes/README.md:39:uv run rl @ configs/debug/training_modes/sft.toml
+configs/debug/training_modes/README.md:40:uv run rl @ configs/debug/training_modes/sft_lora.toml
+configs/debug/training_modes/README.md:43:# (requires PRIME_API_KEY + PRIME_TEAM_ID in env; no local teacher needed)
+configs/debug/training_modes/README.md:44:uv run rl @ configs/debug/training_modes/sft_external.toml
+configs/debug/training_modes/README.md:47:See [docs/training_modes.md](../../docs/training_modes.md) for what each mode does.
+configs/debug/training_modes/opd_lora.toml:1:# Start the teacher inference server first (on a separate GPU):
+configs/debug/training_modes/opd_lora.toml:6:#   uv run rl @ configs/debug/training_modes/opd_lora.toml
+configs/debug/training_modes/opd_lora.toml:16:name = "debug-opd-lora"
+configs/debug/training_modes/opd_lora.toml:19:training_mode = "opd"
+configs/debug/training_modes/opd_lora.toml:32:[orchestrator.eval]
+configs/debug/training_modes/opd_lora.toml:36:[orchestrator.eval.sampling]
+configs/debug/training_modes/opd_lora.toml:39:[[orchestrator.eval.env]]
+configs/debug/training_modes/opd_lora.toml:42:[orchestrator.teacher.model]
+configs/debug/training_modes/opd_lora.toml:45:[orchestrator.teacher.client]
+docs/entrypoints.md:11:The orchestrator is a lightweight CPU process that handles the core data and scheduling logic, serving as an intermediary between the trainer and inference service with bidirectional relays. In one direction, it collects rollouts from the inference server, assembles them into packed batches, and dispatches them to the trainer; in the other direction, it relays updated model weights from the trainer to the inference service. The orchestrator utilizes `verifiers` environments to abstract multi-turn rollout generation and scoring. Each training and evaluation environment is exposed as a `vf.EnvServer` as a sidecar to the orchestrator process (default) or as a standalone process (e.g. used in hosted training to run environments in containers).
+docs/entrypoints.md:15:The trainer is responsible for producing an updated policy model given rollouts and advantages. We use FSDP2 as the backend with compatibility for any HuggingFace (HF) model. For some models we also provide custom implementations, mostly for performance reasons. FSDP shards model parameters, gradients, and optimizer states, allowing training large models with data parallelism and minimal GPU memory footprint. We support a variety of popular training objectives, such as GRPO, GSPO, OPO, RLOO and [CISPO](https://arxiv.org/abs/2506.13585). The trainer is inspired by [`torchtitan`](https://github.com/pytorch/torchtitan) and relies on native PyTorch features to implement advanced parallelism techniques, such as tensor, context or expert parallelism.
+docs/entrypoints.md:19:The inference service in its simplest form is a standard OpenAI-compatible server with a vLLM backend. The API specification is extended with a custom `update_weights` endpoint to reload model weights from a HF-compatible checkpoint on disk. Otherwise, we rely on vLLM's optimized kernels, parallelism strategies, and scheduling for fast rollout generation. Given the disaggregated nature of the service architecture, it can be directly extended to include multiple engines with a shared request pool, allowing operation across multiple clusters and straightforward integration of alternative inference engines (e.g. SGLang, Tokasaurus). We also heavily rely on native data parallelism in vLLM (also available in SGLang) for orchestrating the fleet of nodes dedicated to inference.
+configs/debug/training_modes/sft_lora.toml:1:# Start the teacher inference server first (on a separate GPU):
+configs/debug/training_modes/sft_lora.toml:6:#   uv run rl @ configs/debug/training_modes/sft_lora.toml
+configs/debug/training_modes/sft_lora.toml:19:training_mode = "sft"
+configs/debug/training_modes/sft_lora.toml:29:[orchestrator.eval]
+configs/debug/training_modes/sft_lora.toml:33:[orchestrator.eval.sampling]
+configs/debug/training_modes/sft_lora.toml:36:[[orchestrator.eval.env]]
+configs/debug/training_modes/sft_lora.toml:39:[orchestrator.teacher.model]
+configs/debug/training_modes/sft_lora.toml:42:[orchestrator.teacher.client]
+docs/deployment.md:90:For SLURM-based inference deployment, see the [SLURM guide](slurm.md#inference-examples). Each node runs an independent vLLM replica — no manual coordination needed.
+docs/deployment.md:92:For manual multi-node deployment without SLURM, we rely on vLLM's multi-node data parallel deployment primitives ([docs](https://docs.vllm.ai/en/v0.10.0/serving/data_parallel_deployment.html)).
+docs/training_modes.md:3:PRIME-RL supports three training modes through our RL trainer, selected via `training_mode`:
+docs/training_modes.md:5:- **`rl`** — reinforcement learning: student generates rollouts, no teacher
+docs/training_modes.md:6:- **`opd`** — [on-policy distillation](https://thinkingmachines.ai/blog/on-policy-distillation/): students generates rollouts, train to minimize the KL divergence between the student and teacher's logprobs for each token in the rollout
+docs/training_modes.md:7:- **`sft`** — supervised fine-tuning on teacher-generated rollouts
+docs/training_modes.md:9:> Note: PRIME-RL also has a dedicated `sft` entrypoint for more traditional supervised fine-tuning from a HF dataset. When using the `sft` training mode on the orchestrator, teacher rollouts are generated on-the-fly and used for training.
+docs/training_modes.md:11:The mode determines who generates rollouts, what role the teacher plays, and what must be configured.
+docs/training_modes.md:16:| `opd` | required | required (local vLLM) |
+docs/training_modes.md:19:**SFT vs OPD teachers** differ in what the orchestrator asks of them. SFT only calls `/v1/chat/completions` to generate rollouts — any OpenAI-compatible endpoint works (PI inference, OpenAI, Anthropic, a local vLLM). OPD additionally needs token-level logprobs scored over the student's tokens, which today only vLLM's `/inference/v1/generate` with `prompt_logprobs` exposes — so the OPD teacher must be a vLLM server.
+docs/training_modes.md:23:Debug-scale configs for all three modes (and LoRA variants) live in [`configs/debug/training_modes/`](../configs/debug/training_modes/):
+docs/training_modes.md:25:- `rl.toml` / `opd.toml` / `opd_lora.toml`
+docs/training_modes.md:26:- `sft.toml` / `sft_lora.toml` (local vLLM teacher)
+docs/training_modes.md:27:- `sft_external.toml` (PI inference teacher)
+docs/training_modes.md:29:See [`configs/debug/training_modes/README.md`](../configs/debug/training_modes/README.md) for run commands.
+docs/training_modes.md:35:| `training_mode` | `"rl"` | One of `rl`, `opd`, `sft`. Propagates to `orchestrator.training_mode` and (for sft) `trainer.loss.type`. |
+docs/training_modes.md:36:| `deployment.num_teacher_gpus` | `None` | Number of GPUs for the teacher vLLM server. Auto-starts when set. OPD only. |
+docs/training_modes.md:37:| `trainer.loss.teacher_tau` | `0.0` | Distillation strength. Must be `> 0` in OPD. |
+docs/troubleshooting.md:5:We already set much larger timeout limits for the API clients that we use for training and evals. If you still encounter API timeout or connection errors, then this may be caused by your OS limiting the number of open file descriptors. Try increasing the maximum number of open files with
+docs/logging.md:45:├── inference.log                # vLLM inference server stdout
+docs/logging.md:52:    └── eval/{env_name}/
+docs/logging.md:75:Environment logs live under `logs/envs/train/{env_name}/` and `logs/envs/eval/{env_name}/`. Env log verbosity is controlled by `orchestrator.log.vf_level`.
+docs/async.md:3:PRIME-RL implements asynchronous off-policy training, instead of the traditional synchronous on-policy training. This means that we allow inference to generate rollouts from a stale policy up to $k$ (in the code we call this `max_async_level`) steps ahead of the trainer. With `k=1` and trainer and inference step timings being equal, this allows to run without any idle time on either the trainer or inference. By default, we set `k=2` to allow overlap with a weight broadcast over the Internet, which is needed for decentralized training.
+docs/async.md:10:but omit the entropy and KL loss terms.
+configs/deepscaler/README.md:75:They evaluate on a series of math benchmarks, including Math500, AIME24, AMC23, Minerva Math and Olympiad Math. We will focus on `math500` and `aime2024` for the reproduction, as these are already implemented as evaluation environments on the Environment Hub and also the most prominent benchmarks. We uploaded the weight checkpoints to HF as `DeepSeek-R1-Distill-Qwen-1.5B-DeepScaleR-XXX` and evaluate the base model and each checkpoint.
+configs/deepscaler/README.md:77:![Evals](eval.png)
+configs/deepscaler/README.md:107:uv run eval @ configs/deepscaler/eval.toml  --model.name ...
+configs/gsm8k/README.md:40:uv run vf-eval math-env \
+configs/gsm8k/README.md:77:uv run vf-eval math-env \
+docs/testing-moe-at-small-scale.md:48:This fine-tunes on [PrimeIntellect/Reverse-Text-SFT](https://huggingface.co/datasets/PrimeIntellect/Reverse-Text-SFT) for 200 steps. Loss should drop from ~12 to ~2.5. The model won't be coherent, but it will have a non-trivial distribution so KL divergence is meaningful during RL.
+docs/testing-moe-at-small-scale.md:82:- **KL divergence is non-zero and finite** — confirms the reference model distribution is working
+docs/index.md:5:- [**Entrypoints**](entrypoints.md) - Overview of the main components (orchestrator, trainer, inference) and how to run SFT, RL, and evals
+docs/index.md:8:- [**Async Training**](async.md) - Understanding asynchronous off-policy training and step semantics
+docs/multimodal.md:1:# Multimodal (VLM) Support
+docs/multimodal.md:3:Prime-RL supports training vision-language models (VLMs) like Qwen3-VL.
+docs/multimodal.md:5:## VLM Configuration
+docs/multimodal.md:14:| Qwen3.5 | `qwen3_5` | `model.visual` | `model.language_model` |
+docs/multimodal.md:15:| Qwen3.5-MoE | `qwen3_5_moe` | `model.visual` | `model.language_model` |
+docs/multimodal.md:17:Enable VLM mode by adding a `[model.vlm]` section. Both fields are required — they tell prime-rl where the vision encoder and language model live on the model object:
+docs/multimodal.md:28:For the registered models in the table above, use the attrs shown there. For custom VLMs, check your model's structure with `model.named_children()`.
+docs/multimodal.md:34:To add permanent support for a new model family, add an entry to `VLM_REGISTRY` in `src/prime_rl/utils/vlm.py`.
+docs/multimodal.md:40:- **No multimodal-safe truncation**: Token sequences are truncated to `seq_len`, but `pixel_values` and `image_grid_thw` are passed through unchanged. If a multimodal sample exceeds `seq_len`, image tokens can be dropped while image tensors still describe the full set of images. Ensure `seq_len` covers your longest VLM samples.
+docs/multimodal.md:44:- **Higher KL mismatch with multi-image inputs**: VLM training exhibits higher KL mismatch compared to text-only, especially with multiple images.
+docs/multimodal.md:46:- **Images are not logged**: The images the VLM sees during training are not logged to monitors.
+docs/multimodal.md:48:## How Multi-Turn VLM RL Training Works
+docs/multimodal.md:50:VLM rollouts go through the renderer-backed TITO client (`orchestrator.use_renderer = true`, the default and required for VLMs). The renderer owns the HuggingFace processor per-slot and emits multimodal tensors alongside tokens.
+docs/multimodal.md:54:3. **Forward**: The trainer `**`-unpacks `mm_kwargs` into the model's `forward` signature, so any VLM whose HF processor and forward agree on kwarg names works without touching the transport.
+docs/multimodal.md:58:## vLLM Configuration
+docs/multimodal.md:60:`VLLM_WORKER_MULTIPROC_METHOD=spawn` is required for VLM inference. This is set automatically when using `uv run rl @ ...`, but if you start the vLLM server yourself, make sure this environment variable is set.
+docs/slurm.md:76:**Inference** runs independent vLLM replicas per node:
+docs/slurm.md:211:Run a vLLM server on a single allocated node:
+docs/slurm.md:233:Each node runs an independent vLLM replica. TP and DP must fit within a single node — there is no cross-node parallelism.
+configs/acereason_math/stage1.toml:30:[orchestrator.eval]
+configs/acereason_math/stage1.toml:33:[[orchestrator.eval.env]]
+configs/acereason_math/stage1.toml:37:[[orchestrator.eval.env]]
+configs/acereason_math/stage1.toml:41:[[orchestrator.eval.env]]
+docs/bring-your-own-algorithms.md:25:    teacher_logprobs: Float[Tensor, "seq"] | None  # Optional teacher log probs
+docs/bring-your-own-algorithms.md:132:- **Loss**: Uses `default_loss_fn` (masked importance sampling with KL against the inference policy, and optional masking strategies)
+configs/acereason_math/stage2.toml:31:[orchestrator.eval]
+configs/acereason_math/stage2.toml:34:[[orchestrator.eval.env]]
+configs/acereason_math/stage2.toml:38:[[orchestrator.eval.env]]
+configs/acereason_math/stage2.toml:42:[[orchestrator.eval.env]]
+configs/multimodal/rl_color_codeword_feat_renderer.toml:24:# drift as a confound for the sampler-vs-trainer KL.
+configs/multimodal/rl_color_codeword_feat_renderer.toml:69:# image processor (CPU-bound) dominates for VLMs so returns diminish
+configs/multimodal/rl_color_codeword_feat_renderer.toml:85:# Workaround for vLLM 0.20.1 Qwen3-VL deepstack buffer bug: when num_scheduled_tokens
+configs/math_group/rl.toml:30:[orchestrator.eval]
+configs/math_group/rl.toml:33:[[orchestrator.eval.env]]
+packages/prime-rl-configs/src/prime_rl/configs/shared.py:61:class VLMConfig(BaseConfig):
+packages/prime-rl-configs/src/prime_rl/configs/shared.py:79:    vlm: "VLMConfig | None" = None
+packages/prime-rl-configs/src/prime_rl/configs/shared.py:80:    """VLM configuration. Setting this enables vision-language model support."""
+packages/prime-rl-configs/src/prime_rl/utils/validation.py:112:    # [tokenizer]. ``chat_template`` also flows to ``inference.model`` (vLLM's
+packages/prime-rl-configs/src/prime_rl/utils/validation.py:145:    # (vLLM ``--chat-template``). Read trainer's value *after* the shared
+src/prime_rl/utils/monitor/multi.py:36:    def log_eval_samples(self, rollouts: list[vf.RolloutOutput], env_name: str, step: int) -> None:
+src/prime_rl/utils/monitor/multi.py:39:                monitor.log_eval_samples(rollouts=rollouts, env_name=env_name, step=step)
+src/prime_rl/utils/monitor/multi.py:41:                self.logger.warning(f"Failed to log eval samples to {monitor.__class__.__name__}: {e}")
+src/prime_rl/utils/monitor/base.py:46:    def log_eval_samples(self, rollouts: list[vf.RolloutOutput], env_name: str, step: int) -> None:
+src/prime_rl/utils/monitor/base.py:78:    def log_eval_samples(self, rollouts: list[vf.RolloutOutput], env_name: str, step: int) -> None:
+src/prime_rl/utils/elastic.py:108:        eval_client_type: str = "openai_chat_completions",
+src/prime_rl/utils/elastic.py:125:        self.eval_client_type = eval_client_type
+src/prime_rl/utils/elastic.py:140:        self._eval_clients: list[vf.ClientConfig] = []
+src/prime_rl/utils/elastic.py:143:        self._eval_index = 0
+src/prime_rl/utils/elastic.py:154:        eval_client_type: str = "openai_chat_completions",
+src/prime_rl/utils/elastic.py:168:            eval_client_type=eval_client_type,
+src/prime_rl/utils/elastic.py:206:            self._eval_index = 0
+src/prime_rl/utils/elastic.py:232:            self._eval_clients = setup_clients(url_config, client_type=self.eval_client_type) if urls else []
+src/prime_rl/utils/elastic.py:240:    def eval_clients(self) -> list[vf.ClientConfig]:
+src/prime_rl/utils/elastic.py:242:        return self._eval_clients
+src/prime_rl/utils/elastic.py:244:    async def get_eval_client(self) -> vf.ClientConfig:
+src/prime_rl/utils/elastic.py:245:        """Get next eval client in round-robin fashion."""
+src/prime_rl/utils/elastic.py:246:        while not self.eval_clients:
+src/prime_rl/utils/elastic.py:248:        client = self._eval_clients[self._eval_index % len(self._eval_clients)]
+src/prime_rl/utils/elastic.py:249:        self._eval_index += 1
+src/prime_rl/utils/elastic.py:368:            f"Adapter mismatch on {ip} after loading: "
+src/prime_rl/utils/elastic.py:487:        self._eval_clients = []
+src/prime_rl/utils/pathing.py:20:    eval_env_names: list[str] | None = None,
+src/prime_rl/utils/pathing.py:52:        if eval_env_names:
+src/prime_rl/utils/pathing.py:53:            log_lines.append(f"{i2}{'Eval:':<{col - 1}}tail -F {env_log_dir}/eval/*/*.log")
+src/prime_rl/utils/pathing.py:54:            for name in eval_env_names:
+src/prime_rl/utils/pathing.py:56:                log_lines.append(f"{i3}{f'{short}:':<{col - 2}}tail -F {env_log_dir}/eval/{name}/*.log")
+src/prime_rl/utils/pathing.py:76:def get_eval_dir(output_dir: Path) -> Path:
+src/prime_rl/utils/pathing.py:77:    return output_dir / "evals"
+src/prime_rl/utils/monitor/wandb.py:125:                self.eval_samples_cols = ["step", "env", "task", "example_id", "completion", "reward"]
+src/prime_rl/utils/monitor/wandb.py:126:                self.eval_samples_table = wandb.Table(
+src/prime_rl/utils/monitor/wandb.py:127:                    columns=self.eval_samples_cols,
+src/prime_rl/utils/monitor/wandb.py:203:    def log_eval_samples(self, rollouts: list[vf.RolloutOutput], env_name: str, step: int) -> None:
+src/prime_rl/utils/monitor/wandb.py:204:        """Logs eval rollouts to a separate W&B table."""
+src/prime_rl/utils/monitor/wandb.py:232:            self.eval_samples_table.add_data(*sample.values())
+src/prime_rl/utils/monitor/wandb.py:234:        wandb.log({"eval/samples": self.eval_samples_table, "step": step})
+src/prime_rl/utils/cp.py:28:        # Qwen3.5 hybrid DeltaNet
+src/prime_rl/utils/cp.py:49:            "or Mamba/SSM layers (e.g. Qwen3.5 hybrid, NemotronH). Use "
+src/prime_rl/utils/cp.py:56:    """Configure DeltaNet modules in Qwen3.5 hybrid models for ulysses-style CP."""
+src/prime_rl/utils/client.py:42:    async def get_eval_client(self) -> vf.ClientConfig:
+src/prime_rl/utils/client.py:43:        """Get next eval client in round-robin fashion."""
+src/prime_rl/utils/client.py:71:        eval_client_type: str = "openai_chat_completions",
+src/prime_rl/utils/client.py:91:        self._eval_clients = setup_clients(client_config, client_type=eval_client_type)
+src/prime_rl/utils/client.py:95:        self._eval_cycle = cycle(self._eval_clients)
+src/prime_rl/utils/client.py:110:    def eval_clients(self) -> list[vf.ClientConfig]:
+src/prime_rl/utils/client.py:111:        return self._eval_clients
+src/prime_rl/utils/client.py:113:    async def get_eval_client(self) -> vf.ClientConfig:
+src/prime_rl/utils/client.py:114:        return next(self._eval_cycle)
+src/prime_rl/utils/client.py:136:    eval_client_type: str = "openai_chat_completions",
+src/prime_rl/utils/client.py:152:            eval_client_type=eval_client_type,
+src/prime_rl/utils/client.py:165:        eval_client_type=eval_client_type,
+src/prime_rl/utils/client.py:402:    """Make a HTTP post request to the vLLM server to load a LoRA adapter.
+src/prime_rl/utils/client.py:432:    """Make a HTTP post request to the vLLM server to unload a LoRA adapter."""
+src/prime_rl/utils/client.py:454:    Each admin client represents one vLLM server. The function computes
+src/prime_rl/utils/monitor/prime.py:171:        # Evals can run in a forked subprocess (see run_evals_subprocess in eval/utils.py). When a
+src/prime_rl/utils/monitor/prime.py:494:    def log_eval_samples(self, rollouts: list[vf.RolloutOutput], env_name: str, step: int) -> None:
+src/prime_rl/utils/utils.py:25:    get_eval_dir,
+src/prime_rl/utils/vlm.py:1:"""Vision-Language Model (VLM) support utilities.
+src/prime_rl/utils/vlm.py:3:Central registry for VLM model families. All model-specific knowledge
+src/prime_rl/utils/vlm.py:4:lives here. Add new VLM families by extending VLM_REGISTRY.
+src/prime_rl/utils/vlm.py:19:class VLMModelInfo:
+src/prime_rl/utils/vlm.py:20:    """Per-model-family VLM architecture metadata."""
+src/prime_rl/utils/vlm.py:27:VLM_REGISTRY: dict[str, VLMModelInfo] = {

@@ -1,0 +1,162 @@
+dd71bbd252694f5f850213eec15795b6b88d9fea
+README.md:22:  - DAPO ![new](https://img.shields.io/badge/new-orange)
+README.md:26:  - GSPO ![new](https://img.shields.io/badge/new-orange)
+README.md:27:  - CISPO ![new](https://img.shields.io/badge/new-orange)
+README.md:34:  - LoRA training ![new](https://img.shields.io/badge/new-orange)
+README.md:73:| GRPO LoRA Fine-Tuning    |  AMP | 1*12GB | 1*24GB | 2*32GB |  2*80GB |  4*80GB |
+README.md:96:### GRPO LoRA Training
+examples/qwen3_14b_dapo17k_dapo.sh:23:    worker.actor.clip_ratio_low=0.2 \
+examples/qwen3_14b_dapo17k_dapo.sh:24:    worker.actor.clip_ratio_high=0.28 \
+examples/qwen3_14b_dapo17k_dapo.sh:25:    worker.actor.clip_ratio_dual=10.0 \
+examples/qwen3_14b_dapo17k_dapo.sh:28:    worker.rollout.val_override_config='{"n":16,"temperature":1.0,"top_p":0.7}' \
+examples/qwen3_14b_dapo17k_dapo.sh:34:    algorithm.online_filtering=True \
+examples/qwen3_14b_dapo17k_dapo.sh:35:    algorithm.filter_key=accuracy_normalized \
+examples/qwen3_14b_dapo17k_dapo.sh:36:    algorithm.filter_low=0.01 \
+examples/qwen3_14b_dapo17k_dapo.sh:37:    algorithm.filter_high=0.99 \
+examples/qwen2_5_vl_7b_geo3k_cispo.sh:13:    worker.actor.clip_ratio_low=0 \
+examples/qwen2_5_vl_7b_geo3k_cispo.sh:14:    worker.actor.clip_ratio_high=4 \
+examples/config.yaml:21:  filter_overlong_prompts: true
+examples/config.yaml:29:  online_filtering: false  # dapo filter groups
+examples/config.yaml:30:  filter_key: overall
+examples/config.yaml:31:  filter_low: 0.01
+examples/config.yaml:32:  filter_high: 0.99
+examples/config.yaml:49:        rank: 0  # Set to a positive integer to enable LoRA
+examples/config.yaml:50:        alpha: 64  # LoRA scaling factor
+examples/config.yaml:52:        exclude_modules: .*visual.*  # Exclude modules from applying LoRA; example: '.*visual.*' for excluding the ViT in Qwen2.5-VL, as vLLM does not support ViT LoRA
+examples/config.yaml:69:    top_p: 1.0
+examples/config.yaml:78:      top_p: 0.95
+examples/qwen2_5_vl_3b_android_gui_grpo.sh:17:    data.filter_overlong_prompts=false \
+examples/qwen2_5_vl_3b_android_gui_grpo.sh:29:    worker.rollout.top_p=0.95 \
+examples/qwen2_5_vl_7b_geo3k_dapo.sh:13:    worker.actor.clip_ratio_low=0.2 \
+examples/qwen2_5_vl_7b_geo3k_dapo.sh:14:    worker.actor.clip_ratio_high=0.28 \
+examples/qwen2_5_vl_7b_geo3k_dapo.sh:16:    algorithm.online_filtering=True \
+examples/qwen2_5_vl_7b_geo3k_gspo.sh:14:    worker.actor.clip_ratio_low=3e-4 \
+examples/qwen2_5_vl_7b_geo3k_gspo.sh:15:    worker.actor.clip_ratio_high=4e-4 \
+examples/android_gui_cookbook/game_docker/number_game.html:283:            -webkit-background-clip: text;
+verl/protocol.py:362:            batch_keys = tuple(filter(lambda k: k in self.batch, batch_keys))
+verl/protocol.py:369:            non_tensor_batch_keys = tuple(filter(lambda k: k in self.non_tensor_batch, non_tensor_batch_keys))
+verl/protocol.py:378:            meta_info_keys = tuple(filter(lambda k: k in self.meta_info, meta_info_keys))
+verl/protocol.py:444:        for key in filter(lambda k: k in self.batch, batch_keys):
+verl/protocol.py:448:        for key in filter(lambda k: k in self.non_tensor_batch, non_tensor_batch_keys):
+verl/protocol.py:452:        for key in filter(lambda k: k in self.meta_info, meta_info_keys):
+verl/utils/dataset.py:113:        filter_overlong_prompts: bool = True,
+verl/utils/dataset.py:114:        filter_overlong_prompts_workers: int = 16,
+verl/utils/dataset.py:150:        if filter_overlong_prompts:
+verl/utils/dataset.py:151:            self.dataset = self.dataset.filter(
+verl/utils/dataset.py:152:                self._filter_overlong_prompts,
+verl/utils/dataset.py:154:                num_proc=filter_overlong_prompts_workers,
+verl/utils/dataset.py:187:    def _filter_overlong_prompts(self, example: dict[str, Any]) -> bool:
+verl/utils/dataset.py:289:            position_ids = torch.clip(attention_mask.cumsum(dim=0) - 1, min=0, max=None)  # (seq_length,)
+verl/trainer/core_algos.py:59:        proportional_error = np.clip(current_kl / target - 1, -0.2, 0.2)
+verl/trainer/core_algos.py:415:    clip_ratio_low: float,
+verl/trainer/core_algos.py:416:    clip_ratio_high: float,
+verl/trainer/core_algos.py:417:    clip_ratio_dual: float,
+verl/trainer/core_algos.py:424:    """Compute the clipped policy objective and related metrics for PPO.
+verl/trainer/core_algos.py:437:        clip_ratio_low: (float)
+verl/trainer/core_algos.py:438:            The lower clip range used in PPO. See https://arxiv.org/abs/1707.06347
+verl/trainer/core_algos.py:439:        clip_ratio_high: (float)
+verl/trainer/core_algos.py:440:            The higher clip range used in DAPO. See https://arxiv.org/pdf/2503.14476
+verl/trainer/core_algos.py:441:        clip_ratio_dual: (float)
+verl/trainer/core_algos.py:442:            The dual clip range used in Dual-clip PPO. See https://arxiv.org/pdf/1912.09729
+verl/trainer/core_algos.py:444:            The temperature for control the positive tokens' clipping in SAPO. See https://arxiv.org/pdf/2511.20347
+verl/trainer/core_algos.py:446:            The temperature for control the negative tokens' clipping in SAPO. See https://arxiv.org/pdf/2511.20347
+verl/trainer/core_algos.py:454:        pg_clipfrac_higher: (float)
+verl/trainer/core_algos.py:455:            a float number indicating the fraction of policy gradient loss being clipped to a higher value
+verl/trainer/core_algos.py:456:        pg_clipfrac_lower: (float)
+verl/trainer/core_algos.py:457:            a float number indicating the fraction of policy gradient loss being clipped to a lower value
+verl/trainer/core_algos.py:479:    clipped_ratio = torch.exp(
+verl/trainer/core_algos.py:480:        torch.clamp(log_importance_ratio, np.log(1.0 - clip_ratio_low), np.log(1.0 + clip_ratio_high))
+verl/trainer/core_algos.py:489:        final_pg_loss = -advantages * log_probs * clipped_ratio.detach()
+verl/trainer/core_algos.py:498:        pg_loss2 = -advantages * clipped_ratio  # -clip(ratio, 1-clip_low, 1+clip_high) * A
+verl/trainer/core_algos.py:499:        pg_loss3 = -advantages * clip_ratio_dual  # -clip_dual * A
+verl/trainer/core_algos.py:501:        clipped_pg_loss_higher = torch.max(pg_loss, pg_loss2)  # clip if pg_loss < pg_loss2
+verl/trainer/core_algos.py:502:        metrics["pg_clipfrac_higher"] = (pg_loss < pg_loss2).float()
+verl/trainer/core_algos.py:503:        clipped_pg_loss_lower = torch.min(clipped_pg_loss_higher, pg_loss3)  # clip if pg_loss > pg_loss3 and adv < 0
+verl/trainer/core_algos.py:504:        final_pg_loss = torch.where(advantages < 0, clipped_pg_loss_lower, clipped_pg_loss_higher)
+verl/trainer/core_algos.py:505:        metrics["pg_clipfrac_lower"] = (clipped_pg_loss_higher > pg_loss3).float() * (advantages < 0).float()
+verl/trainer/core_algos.py:517:    cliprange_value: float,
+verl/trainer/core_algos.py:533:        cliprange_value: (float)
+verl/trainer/core_algos.py:534:            The clip range for value net used in PPO. See https://arxiv.org/abs/1707.06347
+verl/trainer/core_algos.py:542:        vf_clipfrac: a float
+verl/trainer/core_algos.py:543:            The ratio of vf being clipped
+verl/trainer/core_algos.py:548:    vpredclipped = torch.clamp(vpreds, values - cliprange_value, values + cliprange_value)
+verl/trainer/core_algos.py:550:    vf_loss2 = torch.square(vpredclipped - returns)
+verl/trainer/core_algos.py:551:    clipped_vf_losses = torch.max(vf_loss1, vf_loss2)  # clip if vf_loss1 < vf_loss2
+verl/trainer/core_algos.py:552:    vf_loss = 0.5 * average_loss(clipped_vf_losses, response_mask, mode=loss_avg_mode)
+verl/trainer/core_algos.py:554:        "vf_clipfrac": VF.masked_mean((vf_loss1 < vf_loss2).float(), response_mask).detach().item(),
+verl/workers/actor/dp_actor.py:159:            grad_norm = self.actor_module.clip_grad_norm_(self.config.max_grad_norm)
+verl/workers/actor/dp_actor.py:161:            grad_norm = nn.utils.clip_grad_norm_(self.actor_module.parameters(), max_norm=self.config.max_grad_norm)
+verl/workers/actor/dp_actor.py:264:                        clip_ratio_low=self.config.clip_ratio_low,
+verl/workers/actor/dp_actor.py:265:                        clip_ratio_high=self.config.clip_ratio_high,
+verl/workers/actor/dp_actor.py:266:                        clip_ratio_dual=self.config.clip_ratio_dual,
+verl/single_controller/ray/base.py:59:    to be consistent across nodes when resume from checkpoint.
+verl/trainer/ray_trainer.py:517:            # filter group
+verl/trainer/ray_trainer.py:518:            if self.config.algorithm.online_filtering:
+verl/trainer/ray_trainer.py:524:                filter_scores = reward_metrics[self.config.algorithm.filter_key]
+verl/trainer/ray_trainer.py:527:                for uid, score in zip(uids, filter_scores):
+verl/trainer/ray_trainer.py:534:                    if avg_score > self.config.algorithm.filter_low and avg_score < self.config.algorithm.filter_high
+verl/trainer/ray_trainer.py:538:                    raise RuntimeError("No sample is kept after filtering. Please check your data.")
+verl/trainer/ray_trainer.py:556:                if self.config.algorithm.online_filtering:
+verl/trainer/metrics.py:39:        "response_length/clip_ratio": torch.eq(response_length, max_response_length).float().mean().detach().item(),
+verl/trainer/metrics.py:44:        "prompt_length/clip_ratio": torch.eq(prompt_length, max_prompt_length).float().mean().detach().item(),
+verl/workers/fsdp_workers.py:237:            self.print_rank0("Applying LoRA to actor module")
+verl/workers/fsdp_workers.py:329:                    filter(lambda p: p.requires_grad, self.fsdp_module.parameters()),
+verl/workers/fsdp_workers.py:337:                    filter(lambda p: p.requires_grad, self.fsdp_module.parameters()),
+verl/workers/actor/config.py:106:    """number to clip grad norm"""
+verl/workers/actor/config.py:107:    clip_ratio_low: float = 0.2
+verl/workers/actor/config.py:108:    """clip ratio in PPO & DAPO"""
+verl/workers/actor/config.py:109:    clip_ratio_high: float = 0.3
+verl/workers/actor/config.py:110:    """clip ratio in PPO & DAPO"""
+verl/workers/actor/config.py:111:    clip_ratio_dual: float = 3.0
+verl/workers/actor/config.py:112:    """constant C in dual-clip PPO, clips when advantage < -C"""
+verl/workers/actor/config.py:120:    """use padding-free training"""
+verl/trainer/config.py:56:    filter_overlong_prompts: bool = True
+verl/trainer/config.py:57:    filter_overlong_prompts_workers: int = 16
+verl/trainer/config.py:87:    online_filtering: bool = False
+verl/trainer/config.py:88:    """use online filtering"""
+verl/trainer/config.py:89:    filter_key: str = "overall"
+verl/trainer/config.py:90:    """reward key for filtering samples"""
+verl/trainer/config.py:91:    filter_low: float = 0.01
+verl/trainer/config.py:92:    """filter out low reward samples if online filtering"""
+verl/trainer/config.py:93:    filter_high: float = 0.99
+verl/trainer/config.py:94:    """filter out high reward samples if online filtering"""
+verl/trainer/config.py:114:    """max number of generations for online filtering, -1 means no limit"""
+verl/trainer/config.py:138:    """automatically find the last checkpoint in the save checkpoint path to resume training"""
+verl/workers/sharding_manager/fsdp_vllm.py:40:from ...utils.vllm_utils import TensorLoRARequest
+verl/workers/sharding_manager/fsdp_vllm.py:103:        """Collect LoRA weights from each transformer layer."""
+verl/workers/sharding_manager/fsdp_vllm.py:150:            lora_reqest = TensorLoRARequest(
+verl/workers/sharding_manager/fsdp_vllm.py:158:            print_gpu_memory_usage("After load LoRA weights in sharding manager")
+verl/workers/critic/config.py:33:    """number to clip grad norm"""
+verl/workers/critic/config.py:34:    cliprange_value: float = 0.5
+verl/workers/critic/config.py:35:    """clip range for value loss"""
+verl/workers/critic/config.py:41:    """use padding-free training"""
+verl/workers/critic/dp_critic.py:127:            grad_norm = self.critic_module.clip_grad_norm_(self.config.max_grad_norm)
+verl/workers/critic/dp_critic.py:129:            grad_norm = torch.nn.utils.clip_grad_norm_(
+verl/workers/critic/dp_critic.py:214:                        cliprange_value=self.config.cliprange_value,
+verl/workers/rollout/config.py:27:    top_p: float = 1.0
+verl/workers/rollout/config.py:28:    top_k: int = -1
+verl/workers/rollout/vllm_rollout_spmd.py:25:from vllm.lora.request import LoRARequest
+verl/workers/rollout/vllm_rollout_spmd.py:219:                    LoRARequest(lora_name=f"{lora_int_id}", lora_int_id=lora_int_id, lora_path="/simon-stub-path")
+verl/trainer/data_loader.py:42:        filter_overlong_prompts=config.filter_overlong_prompts,
+verl/trainer/data_loader.py:43:        filter_overlong_prompts_workers=config.filter_overlong_prompts_workers,
+verl/trainer/data_loader.py:45:    # use sampler for better ckpt resume
+verl/trainer/data_loader.py:83:        filter_overlong_prompts=config.filter_overlong_prompts,
+verl/utils/vllm_utils.py:20:from vllm.lora.models import LoRAModel
+verl/utils/vllm_utils.py:21:from vllm.lora.request import LoRARequest
+verl/utils/vllm_utils.py:23:from vllm.lora.worker_manager import LRUCacheWorkerLoRAManager
+verl/utils/vllm_utils.py:26:class TensorLoRARequest(LoRARequest):
+verl/utils/vllm_utils.py:34:        def hijack__load_adapter(self, lora_request: TensorLoRARequest) -> LoRAModel:
+verl/utils/vllm_utils.py:36:            based on vllm.lora.worker_manager.WorkerLoRAManager._load_adapter, support load adapter with lora tensors
+verl/utils/vllm_utils.py:38:            VLLM does not support adding LoRA from tensors directly. It only supports adding LoRA via file paths.
+verl/utils/vllm_utils.py:39:            To synchronize the LoRA tensors of the actor model, we need to find a workaround to enable VLLM to load memory-based LoRA tensors.
+verl/utils/vllm_utils.py:55:            if isinstance(lora_request, TensorLoRARequest):
+verl/utils/vllm_utils.py:64:            # Validates the LoRA configuration against requirements before
+verl/utils/vllm_utils.py:75:            if isinstance(lora_request, TensorLoRARequest):
+verl/utils/vllm_utils.py:104:                    f"LoRA added vocab size {lora.extra_vocab_size} "
+verl/utils/vllm_utils.py:110:        setattr(LRUCacheWorkerLoRAManager, "_load_adapter", hijack__load_adapter)
+verl/utils/vllm_utils.py:121:                This breaks LoRA filtering for multimodal parts, so we align the prefixes to the real module names.
+verl/utils/fsdp_utils.py:58:        is_lora_model: Whether to enable lambda policy for LoRA modules
+verl/utils/fsdp_utils.py:70:    # Add lambda policy for LoRA modules if is_lora_model is True
+verl/utils/fsdp_utils.py:74:            # If there are no child modules (leaf node), and there is a weight, and the weight requires gradient (usually LoRA A/B matrices), then wrap
+verl/utils/checkpoint/fsdp_checkpoint_manager.py:156:                print(f"[rank-{self.rank}]: Saved LoRA adapter to: {lora_path}")
+verl/utils/checkpoint/checkpoint_manager.py:136:    print(f"Found latest checkpoint: {ckpt_path}, will resume from it. Turn off `find_last_checkpoint` to disable it.")

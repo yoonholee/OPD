@@ -1,0 +1,12 @@
+==unset==
+NCCL version 2.27.3+cuda12.9
+{'rank': 1, 'x': 10.0, 'cumem': None}{'rank': 3, 'x': 10.0, 'cumem': None}
+
+{'rank': 2, 'x': 10.0, 'cumem': None}
+{'rank': 0, 'x': 10.0, 'cumem': None}
+==0==
+NCCL version 2.27.3+cuda12.9
+{'rank': 1, 'x': 10.0, 'cumem': '0'}{'rank': 2, 'x': 10.0, 'cumem': '0'}{'rank': 3, 'x': 10.0, 'cumem': '0'}
+
+
+{'rank': 0, 'x': 10.0, 'cumem': '0'}

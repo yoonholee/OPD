@@ -31,7 +31,6 @@ from transformers import (
     AutoModelForCausalLM,
     AutoModelForSequenceClassification,
     AutoModelForTokenClassification,
-    AutoModelForVision2Seq,
     GenerationConfig,
     MistralForSequenceClassification,
     PretrainedConfig,
@@ -41,6 +40,13 @@ from transformers.modeling_outputs import CausalLMOutputWithPast
 
 from verl.models.registry import ModelRegistry
 from verl.utils.import_utils import is_trl_available
+from verl.utils.transformers_compat import (
+    AutoModelForImageTextToText,
+    AutoModelForVision2Seq,
+    auto_class_from_remote_name,
+    conditional_generation_auto_class,
+    mapping_keys,
+)
 
 
 class LambdaLayer(nn.Module):
@@ -617,7 +623,7 @@ def patch_valuehead_model(model) -> None:
 
 
 def load_valuehead_model(local_path, torch_dtype, model_config, trust_remote_code):
-    from transformers import AutoModelForCausalLM, AutoModelForTokenClassification, AutoModelForVision2Seq
+    from transformers import AutoModelForCausalLM, AutoModelForTokenClassification
 
     try:
         model = AutoModelForTokenClassification.from_pretrained(
@@ -638,8 +644,10 @@ def load_valuehead_model(local_path, torch_dtype, model_config, trust_remote_cod
 
     from trl import AutoModelForCausalLMWithValueHead
 
-    if type(model_config) in AutoModelForVision2Seq._model_mapping.keys():
+    if type(model_config) in mapping_keys(AutoModelForVision2Seq):
         module_class = AutoModelForVision2Seq
+    elif type(model_config) in mapping_keys(AutoModelForImageTextToText):
+        module_class = AutoModelForImageTextToText
     else:
         module_class = AutoModelForCausalLM
     ori_model = module_class.from_pretrained(
@@ -656,6 +664,8 @@ def load_valuehead_model(local_path, torch_dtype, model_config, trust_remote_cod
 
 _architecture_to_auto_class = {
     "ForCausalLM": AutoModelForCausalLM,
+    "ForConditionalGeneration": conditional_generation_auto_class(),
+    "ForImageTextToText": conditional_generation_auto_class(),
     "ForVision2Seq": AutoModelForVision2Seq,
     "ForTokenClassification": AutoModelForTokenClassification,
     "ForSequenceClassification": AutoModelForSequenceClassification,
@@ -668,16 +678,12 @@ def get_hf_auto_model_class(hf_config):
     )
     if has_remote_code:
         auto_class = next(k for k, v in hf_config.auto_map.items() if hf_config.architectures[0] in v)
-        match auto_class:
-            case "AutoModelForVision2Seq":
-                actor_module_class = AutoModelForVision2Seq
-            case "AutoModelForCausalLM":
-                actor_module_class = AutoModelForCausalLM
-            case _:
-                actor_module_class = AutoModel
+        actor_module_class = auto_class_from_remote_name(auto_class)
     else:
         actor_module_class = AutoModel
         for key, cls in _architecture_to_auto_class.items():
+            if cls is None:
+                continue
             if key in hf_config.architectures[0]:
                 actor_module_class = cls
                 break

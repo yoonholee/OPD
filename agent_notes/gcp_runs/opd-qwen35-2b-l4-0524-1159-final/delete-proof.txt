@@ -1,0 +1,8 @@
+verify 2026-05-24T19:30:43Z
+json-verify 2026-05-24T19:30:49Z
+[]
+describe-verify 2026-05-24T19:32:58Z
+ERROR: (gcloud.compute.instances.describe) Could not fetch resource:
+ - The resource 'projects/soe-iris-gcp/zones/us-west1-a/instances/opd-qwen35-2b-l4-0524-1159' was not found
+
+missing-as-expected

@@ -1,0 +1,52 @@
+INFO 05-24 19:03:53 [utils.py:278] non-default args: {'trust_remote_code': True, 'max_model_len': 4096, 'gpu_memory_utilization': 0.7, 'disable_log_stats': True, 'enforce_eager': True, 'limit_mm_per_prompt': {'image': 0, 'video': 0}, 'gdn_prefill_backend': 'triton', 'model': 'Qwen/Qwen3.5-2B'}
+WARNING 05-24 19:03:53 [envs.py:2055] Unknown vLLM environment variable detected: VLLM_GDN_PREFILL_BACKEND
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+INFO 05-24 19:04:09 [model.py:617] Resolved architecture: Qwen3_5ForConditionalGeneration
+INFO 05-24 19:04:09 [model.py:1752] Using max model len 4096
+INFO 05-24 19:04:09 [scheduler.py:239] Chunked prefill is enabled with max_num_batched_tokens=8192.
+INFO 05-24 19:04:09 [vllm.py:977] Asynchronous scheduling is enabled.
+WARNING 05-24 19:04:09 [vllm.py:1033] Enforce eager set, disabling torch.compile and CUDAGraphs. This is equivalent to setting -cc.mode=none -cc.cudagraph_mode=none
+WARNING 05-24 19:04:09 [vllm.py:1058] Inductor compilation was disabled by user settings, optimizations settings that are only active during inductor compilation will be ignored.
+INFO 05-24 19:04:09 [kernel.py:270] Final IR op priority after setting platform defaults: IrOpPriorityConfig(rms_norm=['vllm_c', 'native'], fused_add_rms_norm=['vllm_c', 'native'])
+INFO 05-24 19:04:09 [vllm.py:1234] Cudagraph is disabled under eager mode
+INFO 05-24 19:04:09 [compilation.py:312] Enabled custom fusions: norm_quant, act_quant
+[transformers] `Qwen2VLImageProcessorFast` is deprecated. The `Fast` suffix for image processors has been removed; use `Qwen2VLImageProcessor` instead.
+INFO 05-24 19:04:11 [registry.py:134] All limits of multimodal modalities supported by the model are set to 0, running in text-only mode.
+WARNING 05-24 19:04:15 [system_utils.py:157] We must use the `spawn` multiprocessing start method. Overriding VLLM_WORKER_MULTIPROC_METHOD to 'spawn'. See https://docs.vllm.ai/en/latest/usage/troubleshooting.html#python-multiprocessing for more information. Reasons: CUDA is initialized
+(EngineCore pid=5075) INFO 05-24 19:04:22 [core.py:112] Initializing a V1 LLM engine (v0.21.1rc1.dev268+gd0a100c87) with config: model='Qwen/Qwen3.5-2B', speculative_config=None, tokenizer='Qwen/Qwen3.5-2B', skip_tokenizer_init=False, tokenizer_mode=auto, revision=None, tokenizer_revision=None, trust_remote_code=True, dtype=torch.bfloat16, max_seq_len=4096, download_dir=None, load_format=auto, tensor_parallel_size=1, pipeline_parallel_size=1, data_parallel_size=1, decode_context_parallel_size=1, dcp_comm_backend=ag_rs, disable_custom_all_reduce=False, quantization=None, quantization_config=None, enforce_eager=True, enable_return_routed_experts=False, kv_cache_dtype=auto, device_config=cuda, structured_outputs_config=StructuredOutputsConfig(backend='auto', disable_any_whitespace=False, disable_additional_properties=False, reasoning_parser='', reasoning_parser_plugin='', enable_in_reasoning=False), observability_config=ObservabilityConfig(show_hidden_metrics_for_version=None, otlp_traces_endpoint=None, collect_detailed_traces=None, kv_cache_metrics=False, kv_cache_metrics_sample=0.01, cudagraph_metrics=False, enable_layerwise_nvtx_tracing=False, enable_mfu_metrics=False, enable_mm_processor_stats=False, enable_logging_iteration_details=False), seed=0, served_model_name=Qwen/Qwen3.5-2B, enable_prefix_caching=False, enable_chunked_prefill=True, pooler_config=None, compilation_config={'mode': <CompilationMode.NONE: 0>, 'debug_dump_path': None, 'cache_dir': '', 'compile_cache_save_format': 'binary', 'backend': 'inductor', 'custom_ops': ['all'], 'ir_enable_torch_wrap': False, 'splitting_ops': [], 'compile_mm_encoder': False, 'cudagraph_mm_encoder': False, 'encoder_cudagraph_token_budgets': [], 'encoder_cudagraph_max_vision_items_per_batch': 0, 'encoder_cudagraph_max_frames_per_batch': None, 'compile_sizes': [], 'compile_ranges_endpoints': [8192], 'inductor_compile_config': {'enable_auto_functionalized_v2': False, 'size_asserts': False, 'alignment_asserts': False, 'scalar_asserts': False, 'combo_kernels': True, 'benchmark_combo_kernel': True}, 'inductor_passes': {}, 'cudagraph_mode': <CUDAGraphMode.NONE: 0>, 'cudagraph_num_of_warmups': 0, 'cudagraph_capture_sizes': [], 'cudagraph_copy_inputs': False, 'cudagraph_specialize_lora': True, 'use_inductor_graph_partition': False, 'pass_config': {'fuse_norm_quant': True, 'fuse_act_quant': True, 'fuse_attn_quant': False, 'enable_sp': False, 'fuse_gemm_comms': False, 'fuse_allreduce_rms': False, 'fuse_rope_kvcache_cat_mla': False, 'fuse_act_padding': False}, 'max_cudagraph_capture_size': 0, 'dynamic_shapes_config': {'type': <DynamicShapesType.BACKED: 'backed'>, 'evaluate_guards': False, 'assume_32_bit_indexing': False}, 'local_cache_dir': None, 'fast_moe_cold_start': False, 'static_all_moe_layers': []}, kernel_config=KernelConfig(ir_op_priority=IrOpPriorityConfig(rms_norm=['vllm_c', 'native'], fused_add_rms_norm=['vllm_c', 'native']), enable_flashinfer_autotune=True, moe_backend='auto', linear_backend='auto')
+(EngineCore pid=5075) [transformers] `Qwen2VLImageProcessorFast` is deprecated. The `Fast` suffix for image processors has been removed; use `Qwen2VLImageProcessor` instead.
+(EngineCore pid=5075) Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+(EngineCore pid=5075) INFO 05-24 19:04:27 [registry.py:134] All limits of multimodal modalities supported by the model are set to 0, running in text-only mode.
+(EngineCore pid=5075) INFO 05-24 19:04:27 [parallel_state.py:1422] world_size=1 rank=0 local_rank=0 distributed_init_method=tcp://10.138.0.9:44149 backend=nccl
+(EngineCore pid=5075) INFO 05-24 19:04:27 [parallel_state.py:1735] rank 0 in world size 1 is assigned as DP rank 0, PP rank 0, PCP rank 0, TP rank 0, EP rank N/A, EPLB rank N/A
+(EngineCore pid=5075) INFO 05-24 19:04:29 [topk_topp_sampler.py:45] Using FlashInfer for top-p & top-k sampling.
+(EngineCore pid=5075) INFO 05-24 19:04:29 [gpu_model_runner.py:5037] Starting to load model Qwen/Qwen3.5-2B...
+(EngineCore pid=5075) INFO 05-24 19:04:30 [cuda.py:433] Using backend AttentionBackendEnum.FLASH_ATTN for vit attention
+(EngineCore pid=5075) INFO 05-24 19:04:30 [mm_encoder_attention.py:372] Using AttentionBackendEnum.FLASH_ATTN for MMEncoderAttention.
+(EngineCore pid=5075) INFO 05-24 19:04:30 [qwen_gdn_linear_attn.py:194] Using Triton/FLA GDN prefill kernel (requested=triton, head_k_dim=128).
+(EngineCore pid=5075) INFO 05-24 19:04:30 [cuda.py:378] Using FLASH_ATTN attention backend out of potential backends: ['FLASH_ATTN', 'FLASHINFER', 'TRITON_ATTN', 'FLEX_ATTENTION'].
+(EngineCore pid=5075) INFO 05-24 19:04:30 [flash_attn.py:636] Using FlashAttention version 2
+(EngineCore pid=5075) INFO 05-24 19:04:31 [weight_utils.py:922] Filesystem type for checkpoints: EXT4. Checkpoint size: 4.24 GiB. Available RAM: 182.61 GiB.
+(EngineCore pid=5075) INFO 05-24 19:04:31 [weight_utils.py:945] Auto-prefetch is disabled because the filesystem (EXT4) is not a recognized network FS (NFS/Lustre). If you want to force prefetching, start vLLM with --safetensors-load-strategy=prefetch.
+(EngineCore pid=5075) Loading safetensors checkpoint shards:   0% Completed | 0/1 [00:00<?, ?it/s]
+(EngineCore pid=5075) Loading safetensors checkpoint shards: 100% Completed | 1/1 [00:01<00:00,  1.05s/it]
+(EngineCore pid=5075) Loading safetensors checkpoint shards: 100% Completed | 1/1 [00:01<00:00,  1.05s/it]
+(EngineCore pid=5075) 
+(EngineCore pid=5075) INFO 05-24 19:04:32 [default_loader.py:397] Loading weights took 1.14 seconds
+(EngineCore pid=5075) INFO 05-24 19:04:32 [gpu_model_runner.py:5132] Model loading took 3.63 GiB memory and 2.051170 seconds
+(EngineCore pid=5075) INFO 05-24 19:04:32 [interface.py:649] Setting attention block size to 544 tokens to ensure that attention page size is >= mamba page size.
+(EngineCore pid=5075) INFO 05-24 19:04:32 [interface.py:673] Padding mamba page size by 2.64% to ensure that mamba page size and attention page size are exactly equal.
+Terminated
+(EngineCore pid=5075) INFO 05-24 19:07:48 [gpu_worker.py:466] Available KV cache memory: 10.8 GiB
+(EngineCore pid=5075) INFO 05-24 19:07:48 [kv_cache_utils.py:1733] GPU KV cache size: 646,050 tokens
+(EngineCore pid=5075) INFO 05-24 19:07:48 [kv_cache_utils.py:1734] Maximum concurrency for 4,096 tokens per request: 157.73x
+(EngineCore pid=5075) INFO 05-24 19:07:48 [jit_monitor.py:54] Kernel JIT monitor activated — Triton JIT compilations during inference will be logged as warnings.
+(EngineCore pid=5075) INFO 05-24 19:07:48 [core.py:309] init engine (profile, create kv cache, warmup model) took 195.45 s
+(EngineCore pid=5075) INFO 05-24 19:07:48 [vllm.py:977] Asynchronous scheduling is enabled.
+(EngineCore pid=5075) WARNING 05-24 19:07:48 [vllm.py:1033] Enforce eager set, disabling torch.compile and CUDAGraphs. This is equivalent to setting -cc.mode=none -cc.cudagraph_mode=none
+(EngineCore pid=5075) WARNING 05-24 19:07:48 [vllm.py:1058] Inductor compilation was disabled by user settings, optimizations settings that are only active during inductor compilation will be ignored.
+(EngineCore pid=5075) INFO 05-24 19:07:48 [kernel.py:270] Final IR op priority after setting platform defaults: IrOpPriorityConfig(rms_norm=['vllm_c', 'native'], fused_add_rms_norm=['vllm_c', 'native'])
+(EngineCore pid=5075) INFO 05-24 19:07:48 [vllm.py:1234] Cudagraph is disabled under eager mode
+(EngineCore pid=5075) INFO 05-24 19:07:48 [compilation.py:312] Enabled custom fusions: norm_quant, act_quant
+/home/yoonholee/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/multiprocessing/resource_tracker.py:279: UserWarning: resource_tracker: There appear to be 1 leaked semaphore objects to clean up at shutdown
+  warnings.warn('resource_tracker: There appear to be %d '

@@ -1,45 +1,31 @@
-# Copyright 2024 Bytedance Ltd. and/or its affiliates
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
 """
 Compatibility utilities for different versions of transformers library.
 """
+
+from __future__ import annotations
 
 import importlib.metadata
 from functools import lru_cache
 from typing import Optional
 
 from packaging import version
+from transformers import AutoModel
 
-# Handle version compatibility for flash_attn_supports_top_left_mask
-# This function was added in newer versions of transformers
+# Handle version compatibility for flash_attn_supports_top_left_mask.
+# This function was added in newer versions of transformers.
 try:
     from transformers.modeling_flash_attention_utils import flash_attn_supports_top_left_mask
 except ImportError:
-    # For older versions of transformers that don't have this function
-    # Default to False as a safe fallback for older versions
+    # For older versions of transformers that don't have this function.
+    # Default to False as a safe fallback for older versions.
     def flash_attn_supports_top_left_mask():
-        """Fallback implementation for older transformers versions.
-        Returns False to disable features that require this function.
-        """
+        """Fallback implementation for older transformers versions."""
         return False
 
 
 @lru_cache
 def is_transformers_version_in_range(min_version: Optional[str] = None, max_version: Optional[str] = None) -> bool:
     try:
-        # Get the installed version of the transformers library
         transformers_version_str = importlib.metadata.version("transformers")
     except importlib.metadata.PackageNotFoundError as e:
         raise ModuleNotFoundError("The `transformers` package is not installed.") from e
@@ -55,3 +41,45 @@ def is_transformers_version_in_range(min_version: Optional[str] = None, max_vers
         upper_bound_check = transformers_version <= version.parse(max_version)
 
     return lower_bound_check and upper_bound_check
+
+
+# Auto-model compatibility. Transformers 4.x used AutoModelForVision2Seq for
+# some VLM/text-generation models. Newer releases use AutoModelForImageTextToText.
+# Qwen3.5-2B is in the new path.
+try:
+    from transformers import AutoModelForImageTextToText as _AutoModelForImageTextToText
+except ImportError:  # pragma: no cover, depends on transformers version
+    _AutoModelForImageTextToText = None
+
+try:
+    from transformers import AutoModelForVision2Seq as _AutoModelForVision2Seq
+except ImportError:  # pragma: no cover, depends on transformers version
+    _AutoModelForVision2Seq = None
+
+AutoModelForImageTextToText = _AutoModelForImageTextToText
+AutoModelForVision2Seq = _AutoModelForVision2Seq or _AutoModelForImageTextToText
+
+
+def mapping_keys(auto_cls):
+    mapping = getattr(auto_cls, "_model_mapping", None)
+    if mapping is None:
+        return ()
+    return mapping.keys()
+
+
+def conditional_generation_auto_class():
+    return AutoModelForImageTextToText or AutoModelForVision2Seq or AutoModel
+
+
+def auto_class_from_remote_name(name: str):
+    if name == "AutoModelForCausalLM":
+        from transformers import AutoModelForCausalLM
+
+        return AutoModelForCausalLM
+    if name == "AutoModelForTokenClassification":
+        from transformers import AutoModelForTokenClassification
+
+        return AutoModelForTokenClassification
+    if name in {"AutoModelForImageTextToText", "AutoModelForVision2Seq"}:
+        return conditional_generation_auto_class()
+    return AutoModel

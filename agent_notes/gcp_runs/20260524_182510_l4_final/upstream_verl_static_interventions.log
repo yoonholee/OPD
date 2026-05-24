@@ -1,0 +1,261 @@
+8232babc17df22d24b317b658addcb9f56acd934
+README.md:52:- [2026/05] verl's zero-mismatch HuggingFace rollout [vexact](https://github.com/verl-project/vexact) is released: with batch-invariant kernels, shared model definition with FSDP, and out-of-box examples compatible with VeOmni.
+README.md:53:- [2026/04] verl's Megatron backend LoRA and router replay support is showcased at [PyTorch Conference Europe 2026](https://pytorchconferenceeu2026.sched.com/event/2Juce/optimizing-reinforcement-learning-at-trillion-parameter-scale-songlin-jiang-aalto-university-mind-lab).
+README.md:57:- [2026/01] The `recipe` directory has been migrated to a dedicated repository: [verl-recipe](https://github.com/verl-project/verl-recipe) and added as a submodule. See https://github.com/verl-project/verl/pull/4795. It can be used as it was after `git submodule update --init --recursive recipe`. Note that [`transfer_queue`](verl/experimental/transfer_queue), [`fully_async_policy`](verl/experimental/fully_async_policy), [`one_step_off_policy`](verl/experimental/one_step_off_policy) and [`vla`](verl/experimental/vla) are kept under [`verl/experimental`](verl/experimental) since they are planned to be merged into the main library. Use them through `verl.experimental.{module}`.
+README.md:64:- [2025/03] [DAPO](https://dapo-sia.github.io/) is the open-sourced SOTA RL algorithm that achieves 50 points on AIME 2024 based on the Qwen2.5-32B pre-trained model, surpassing the previous SOTA achieved by DeepSeek's GRPO (DeepSeek-R1-Zero-Qwen-32B). DAPO's training is fully powered by verl and the reproduction code is available in `recipe/dapo` now.
+README.md:70:  <li> [2025/04] [VAPO](https://arxiv.org/pdf/2504.05118) (value-based augmented PPO) paper covers our latest RL method for reasoning models. Trained from Qwen-32B-base model, VAPO achieves 60.4 on AIME 2024, outperforming DAPO-32B.</li>
+README.md:94:- Reinforcement learning with [PPO](examples/ppo_trainer/), [GRPO](examples/grpo_trainer/), [GSPO](https://github.com/verl-project/verl-recipe/tree/main/gspo/), [ReMax](examples/remax_trainer/), [REINFORCE++](https://verl.readthedocs.io/en/latest/examples/config.html#algorithm), [RLOO](examples/rloo_trainer/), [PRIME](https://github.com/verl-project/verl-recipe/tree/main/prime/), [DAPO](https://github.com/verl-project/verl-recipe/tree/main/dapo/), [DrGRPO](https://github.com/verl-project/verl-recipe/tree/main/drgrpo), [KL_Cov & Clip_Cov](https://github.com/verl-project/verl-recipe/tree/main/entropy) etc.
+README.md:99:- Flash attention 2, sequence packing, sequence parallelism via DeepSpeed Ulysses, [LoRA](examples/tuning/lora/run_qwen3_8b_fsdp.sh), [Liger-kernel](examples/sft/gsm8k/run_qwen2_5_0_5b_fsdp.sh) (`USE_LIGER=1`).
+README.md:101:- Multi-gpu [LoRA RL](https://verl.readthedocs.io/en/latest/advance/ppo_lora.html) support to save memory.
+README.md:281:- [DAPO](https://dapo-sia.github.io/): the fully open source SOTA RL algorithm that beats DeepSeek-R1-zero-32B ![GitHub Repo stars](https://img.shields.io/github/stars/verl-project/verl)
+docs/amd_tutorial/amd_quick_start.rst:136:    bash verl/experimental/fully_async_policy/shell/dapo_7b_math_fsdp2_4_4.sh
+docs/examples/config.rst:133:        rollout_is: token # IS weights
+docs/examples/config.rst:134:        rollout_is_threshold: 2.0 # TIS upper bound, or "0.5_5.0" for IcePop
+docs/examples/config.rst:179:      top_k: -1 # 0 for hf rollout, -1 for vllm rollout
+docs/examples/config.rst:180:      top_p: 1
+docs/examples/config.rst:207:        top_k: -1 # 0 for hf rollout, -1 for vllm rollout
+docs/examples/config.rst:208:        top_p: 1.0
+docs/examples/config.rst:354:  - ``temperature``, ``top_k``, ``top_p`` and others: Sampling
+docs/examples/config.rst:379:  - ``top_k``: Top-k sampling parameter. Default to -1 for vLLM rollout or 0 for HF rollout.
+docs/examples/config.rst:380:  - ``top_p``: Top-p sampling parameter. Default is 1.0 (disabled).
+docs/examples/config.rst:385:    (top_k, top_p, temperature) to control the sampling behavior.
+docs/examples/config.rst:535:       rollout_is: null  # IS weights
+docs/examples/config.rst:536:       rollout_is_threshold: 2.0  # Upper threshold for IS weights
+docs/examples/config.rst:556:  - ``rollout_is``: IS weights aggregation level, ``null`` to disable IS weights.
+docs/examples/config.rst:557:  - ``rollout_is_threshold``: Upper threshold for IS weights (e.g., 2.0).
+docs/examples/config.rst:722:- ``lora_rank``: The rank of the LoRA model, default to 0. If ``lora_rank``>0,
+docs/examples/config.rst:723:  we will train LoRA modules instead of tuning the full model.
+docs/examples/config.rst:724:- ``lora_alpha``: The alpha parameter for LoRA scaling, default to 16.
+docs/workers/trtllm_worker.rst:18:- Synchronous training (GRPO, DAPO, etc.)
+docs/workers/trtllm_worker.rst:61:Using TensorRT-LLM rollout for DAPO with FP8
+docs/workers/trtllm_worker.rst:74:    bash verl/experimental/fully_async_policy/shell/grpo_30b_a3b_base_math_megatron_4_4_mis_trtllm.sh
+docs/workers/engine_workers.rst:114:     directly. LoRA adapters are merged into base weights up-front when
+examples/rollout_correction/run_qwen2_5_7b_fsdp.sh:16:rollout_is="sequence"                     # Self-normalized sequence-level IS
+examples/rollout_correction/run_qwen2_5_7b_fsdp.sh:17:rollout_is_threshold=2.0                  # Upper threshold for IS weights
+examples/rollout_correction/run_qwen2_5_7b_fsdp.sh:18:rollout_is_batch_normalize="true"        # Self-normalization (mean=1.0)
+examples/rollout_correction/run_qwen2_5_7b_fsdp.sh:69:    algorithm.rollout_correction.rollout_is=${rollout_is}
+examples/rollout_correction/run_qwen2_5_7b_fsdp.sh:70:    algorithm.rollout_correction.rollout_is_threshold=${rollout_is_threshold}
+examples/rollout_correction/run_qwen2_5_7b_fsdp.sh:71:    algorithm.rollout_correction.rollout_is_batch_normalize=${rollout_is_batch_normalize}
+examples/rollout_correction/run_qwen2_5_7b_fsdp.sh:120:echo "  - IS mode: ${rollout_is} (self-normalized: ${rollout_is_batch_normalize})"
+examples/rollout_correction/run_qwen2_5_7b_fsdp.sh:121:echo "  - IS threshold: ${rollout_is_threshold}"
+examples/rollout_correction/run_qwen2_5_7b_fsdp.sh:125:echo "  - rollout_corr/rollout_is_mean (should be ~1.0 before batch norm)"
+examples/rollout_correction/run_qwen2_5_7b_fsdp.sh:126:echo "  - rollout_corr/rollout_is_batch_norm_factor (normalization factor applied)"
+examples/rollout_correction/run_qwen2_5_7b_fsdp.sh:127:echo "  - rollout_corr/rollout_is_eff_sample_size (should be >0.5)"
+examples/gspo_trainer/run_qwen3_8b_fsdp.sh:2:# GSPO | text | vLLM rollout | FSDP training | GPU/NPU
+examples/gspo_trainer/run_qwen3_8b_fsdp.sh:3:# GSPO is a sequence-mean policy-loss variant on top of GRPO (paper: arXiv:2507.18071).
+examples/gspo_trainer/run_qwen3_8b_fsdp.sh:156:        actor_rollout_ref.rollout.val_kwargs.top_p=0.7
+docs/ascend_tutorial/feature_support/ascend_backend_features.md:50:| [sgl_kernel_npu](https://github.com/sgl-project/sgl-kernel-npu/blob/main/python/sgl_kernel_npu/README.md) | Ascend NPU  SGL 优化推理内核集合，包括注意力机制、归一化、激活函数、LoRA 适配器等。 |
+examples/grpo_trainer/run_qwen3_vl_30b_a3b_fsdp.sh:84:    algorithm.rollout_correction.rollout_is=${ROLLOUT_IS}
+examples/grpo_trainer/run_qwen3_vl_30b_a3b_fsdp.sh:85:    algorithm.rollout_correction.rollout_is_threshold=${ROLLOUT_IS_THRESHOLD}
+examples/grpo_trainer/run_qwen3_vl_30b_a3b_fsdp.sh:86:    algorithm.rollout_correction.rollout_is_batch_normalize=${ROLLOUT_IS_BATCH_NORMALIZE}
+examples/grpo_trainer/run_nemotron_nano_v3_30b_a3b_megatron.sh:26:project_name='DAPO'
+examples/grpo_trainer/run_nemotron_nano_v3_30b_a3b_megatron.sh:64:top_p=1.0
+examples/grpo_trainer/run_nemotron_nano_v3_30b_a3b_megatron.sh:65:top_k=-1 # 0 for HF rollout, -1 for vLLM rollout
+examples/grpo_trainer/run_nemotron_nano_v3_30b_a3b_megatron.sh:66:val_top_p=0.7
+examples/grpo_trainer/run_nemotron_nano_v3_30b_a3b_megatron.sh:162:    actor_rollout_ref.rollout.top_p=${top_p}
+examples/grpo_trainer/run_nemotron_nano_v3_30b_a3b_megatron.sh:163:    actor_rollout_ref.rollout.top_k=${top_k}
+examples/grpo_trainer/run_nemotron_nano_v3_30b_a3b_megatron.sh:165:    actor_rollout_ref.rollout.val_kwargs.top_p=${val_top_p}
+examples/grpo_trainer/run_nemotron_nano_v3_30b_a3b_megatron.sh:166:    actor_rollout_ref.rollout.val_kwargs.top_k=${top_k}
+examples/grpo_trainer/README.md:99:LoRA variants live in `examples/tuning/lora/`, profiling variants in `examples/profile/`.
+docs/ascend_tutorial/feature_support/npu_advance_features.md:42:| [sgl_kernel_npu](https://github.com/sgl-project/sgl-kernel-npu/blob/main/python/sgl_kernel_npu/README.md) | Ascend NPU 优化推理内核集合，含注意力机制、归一化、激活函数、LoRA 适配器等 |
+examples/grpo_trainer/run_qwen3_30b_a3b_megatron.sh:3:# DAPO-style recipe on DAPO-Math-17k / AIME-2024.
+examples/grpo_trainer/run_qwen3_30b_a3b_megatron.sh:24:train_files=${TRAIN_FILES:-${DAPO_MATH_TRAIN:-${DATA_DIR}/data/DAPO-Math-17k/data/dapo-math-17k.parquet}}
+examples/grpo_trainer/run_qwen3_30b_a3b_megatron.sh:61:rollout_top_p=${ROLLOUT_TOP_P:-1}
+examples/grpo_trainer/run_qwen3_30b_a3b_megatron.sh:71:val_top_p=${VAL_TOP_P:-0.7}
+examples/grpo_trainer/run_qwen3_30b_a3b_megatron.sh:187:    actor_rollout_ref.rollout.top_p=${rollout_top_p}
+examples/grpo_trainer/run_qwen3_30b_a3b_megatron.sh:190:    actor_rollout_ref.rollout.val_kwargs.top_p=${val_top_p}
+examples/grpo_trainer/run_qwen3_next_80b_a3b_fsdp.sh:28:top_p=${TOP_P:-1.0}
+examples/grpo_trainer/run_qwen3_next_80b_a3b_fsdp.sh:29:top_k=${TOP_K:--1} # 0 for HF rollout, -1 for vLLM rollout
+examples/grpo_trainer/run_qwen3_next_80b_a3b_fsdp.sh:30:val_top_p=${VAL_TOP_P:-0.7}
+examples/grpo_trainer/run_qwen3_next_80b_a3b_fsdp.sh:127:    actor_rollout_ref.rollout.top_p=${top_p}
+examples/grpo_trainer/run_qwen3_next_80b_a3b_fsdp.sh:128:    actor_rollout_ref.rollout.top_k=${top_k}
+examples/grpo_trainer/run_qwen3_next_80b_a3b_fsdp.sh:130:    actor_rollout_ref.rollout.val_kwargs.top_p=${val_top_p}
+examples/grpo_trainer/run_qwen3_next_80b_a3b_fsdp.sh:131:    actor_rollout_ref.rollout.val_kwargs.top_k=${top_k}
+examples/grpo_trainer/run_qwen3_5_35b_a3b_veomni.sh:111:    actor_rollout_ref.rollout.val_kwargs.top_p=0.7 \
+docs/ascend_tutorial/model_support/model_and_algorithm_support.md:9:| 1 | Qwen2.5-7B-Instruct | DAPO | [7B](https://huggingface.co/Qwen/Qwen2.5-7B-Instruct) | FSDP | vllm | [`link`](https://github.com/verl-project/verl-recipe/blob/main/dapo/run_dapo_qwen2.5_7b_npu.sh) | Atlas 200T A2 Box16, Atlas 800T A3 |
+docs/ascend_tutorial/model_support/model_and_algorithm_support.md:10:| 2 | Qwen2.5-VL-3B-Instruct | DAPO | [3B](https://huggingface.co/Qwen/Qwen2.5-VL-3B-Instruct) | FSDP2 | vllm | [`link`](https://github.com/verl-project/verl-recipe/blob/main/dapo/run_dapo_qwen2.5_vl_3b_fsdp2_npu.sh) | Atlas 900 A2 PODc |
+docs/ascend_tutorial/model_support/model_and_algorithm_support.md:13:| 5 | Qwen2.5-VL-7B-Instruct | DAPO | [7B](https://huggingface.co/Qwen/Qwen2.5-VL-7B-Instruct) | FSDP2 | vllm | [`link`](https://github.com/verl-project/verl-recipe/blob/main/dapo/run_dapo_qwen2.5_vl_7b_fsdp2_npu.sh) | Atlas 900 A2 PODc |
+docs/ascend_tutorial/model_support/model_and_algorithm_support.md:15:| 7 | Qwen2.5-32B | DAPO | [32B](https://huggingface.co/Qwen/Qwen2.5-32B) | FSDP | vllm | [`link`](https://github.com/verl-project/verl-recipe/blob/main/dapo/run_dapo_qwen2.5_32b_npu.sh) | Atlas 200T A2 Box16, Atlas 800T A3 |
+docs/ascend_tutorial/model_support/model_and_algorithm_support.md:16:| 8 | Qwen2.5-32B | DAPO | [32B](https://huggingface.co/Qwen/Qwen2.5-32B) | FSDP2 | vllm | [`link`](https://github.com/verl-project/verl-recipe/blob/main/dapo/run_dapo_qwen2.5_32b_fsdp2_4k_npu.sh) | Atlas 200T A2 Box16, Atlas 800T A3 |
+docs/ascend_tutorial/model_support/model_and_algorithm_support.md:17:| 9 | Qwen2.5-32B | DAPO | [32B](https://huggingface.co/Qwen/Qwen2.5-32B) | FSDP2 | vllm | [`link`](https://github.com/verl-project/verl-recipe/blob/main/dapo/run_dapo_qwen2.5_32b_fsdp2_20k_npu.sh) | Atlas 200T A2 Box16, Atlas 800T A3 |
+docs/ascend_tutorial/model_support/model_and_algorithm_support.md:18:| 10 | Qwen2.5-VL-32B-Instruct | DAPO | [32B](https://huggingface.co/Qwen/Qwen2.5-VL-32B-Instruct) | FSDP2 | vllm | [`link`](https://github.com/verl-project/verl-recipe/blob/main/dapo/run_dapo_qwen2.5_vl_32b_fsdp2_npu.sh) | Atlas 200T A2 Box16, Atlas 800T A3 |
+docs/ascend_tutorial/model_support/model_and_algorithm_support.md:24:| 16 | Qwen3-8B | GSPO | [8B](https://huggingface.co/Qwen/Qwen3-8B) | FSDP2 | vllm | [`link`](https://github.com/verl-project/verl/blob/main/examples/gspo_trainer/run_qwen3_8b_fsdp.sh) | Atlas 900 A2 PODc, Atlas 200T A2 Box16, Atlas 800T A3 |
+docs/ascend_tutorial/model_support/model_and_algorithm_support.md:26:| 18 | Qwen3-8B | GRPO(One_Step_Off_Policy) | [8B](https://huggingface.co/Qwen/Qwen3-8B) | FSDP2 | vllm | [`link`](https://github.com/verl-project/verl/blob/main/verl/experimental/one_step_off_policy/shell/grpo_qwen3_8b_gsm8k_fsdp2_8_8_npu.sh) | Atlas 200T A2 Box16, Atlas 800T A3 |
+docs/ascend_tutorial/model_support/model_and_algorithm_support.md:27:| 19 | Qwen3-8B-Base | DAPO | [8B](https://huggingface.co/Qwen/Qwen3-8B-Base) | FSDP | vllm | [`link`](https://github.com/verl-project/verl-recipe/blob/main/dapo/run_dapo_qwen3_8b_base_npu.sh) | Atlas 200T A2 Box16, Atlas 800T A3 |
+docs/ascend_tutorial/model_support/model_and_algorithm_support.md:28:| 20 | Qwen3-14B-Base | DAPO | [14B](https://huggingface.co/Qwen/Qwen3-14B-Base) | FSDP | vllm | [`link`](https://github.com/verl-project/verl-recipe/blob/main/dapo/run_dapo_qwen3_14b_base_npu.sh) | Atlas 200T A2 Box16, Atlas 800T A3 |
+docs/ascend_tutorial/model_support/model_and_algorithm_support.md:29:| 21 | Qwen3-30B | DAPO | [30B](https://huggingface.co/Qwen/Qwen3-30B) | FSDP | vllm | [`link`](https://github.com/verl-project/verl-recipe/blob/main/dapo/run_dapo_qwen3_30b_fsdp_6k_npu.sh) | Atlas 200T A2 Box16, Atlas 800T A3 |
+docs/ascend_tutorial/model_support/model_and_algorithm_support.md:30:| 22 | Qwen3-30B-A3B-Base | DAPO | [30B](https://huggingface.co/Qwen/Qwen3-30B-A3B-Base) | FSDP | vllm | [`link`](https://github.com/verl-project/verl-recipe/blob/main/dapo/run_dapo_qwen3_moe_30b_base_fsdp_npu.sh) | Atlas 200T A2 Box16, Atlas 800T A3 |
+docs/ascend_tutorial/model_support/model_and_algorithm_support.md:33:| 25 | Qwen3-30B-A3B | DAPO | [30B](https://huggingface.co/Qwen/Qwen3-30B-A3B) | Megatron | vllm | [`link`](https://github.com/verl-project/verl-recipe/blob/main/dapo/run_dapo_qwen3_moe_30b_megatron_npu.sh) | Atlas 200T A2 Box16, Atlas 800T A3 |
+docs/ascend_tutorial/model_support/model_and_algorithm_support.md:34:| 26 | Qwen3-30B-A3B | GRPO (fully_async) | [30B](https://huggingface.co/Qwen/Qwen3-30B-A3B) | FSDP | vllm | [`link`](https://github.com/verl-project/verl/blob/main/verl/experimental/fully_async_policy/shell/dapo_30b_a3b_math_fsdp_npu.sh) | Atlas 200T A2 Box16, Atlas 800T A3 |
+docs/ascend_tutorial/model_support/model_and_algorithm_support.md:38:| 30 | Qwen3-235B-A22B | GRPO (fully_async) | [235B](https://huggingface.co/Qwen/Qwen3-235B-A22B) | Megatron | vllm | [`link`](https://github.com/verl-project/verl/blob/main/verl/experimental/fully_async_policy/shell/grpo_qwen3_235b_megatron_npu.sh%E2%80%8E) | Atlas 900 A2 PODc, Atlas 200T A2 Box16, Atlas 800T A3 |
+docs/ascend_tutorial/model_support/model_and_algorithm_support.md:41:| 33 | Qwen3-VL-8B-Instruct | GRPO (fully_async) | [8B](https://huggingface.co/Qwen/Qwen3-VL-8B-Instruct) | FSDP2 | vllm | [`link`](https://github.com/verl-project/verl/blob/main/verl/experimental/fully_async_policy/shell/geo3k_qwen3vl_8b_fsdp2_16_16_npu.sh) | Atlas 200T A2 Box16, Atlas 800T A3 |
+docs/ascend_tutorial/model_support/model_and_algorithm_support.md:43:| 35 | Qwen3-VL-30B-A3B-Instruct | DAPO | [30B](https://huggingface.co/Qwen/Qwen3-VL-30B-A3B-Instruct) | FSDP2 | vllm | [`link`](https://github.com/verl-project/verl-recipe/blob/main/dapo/run_dapo_qwen3_vl_30b_fsdp2_npu.sh) | Atlas 200T A2 Box16, Atlas 800T A3 |
+docs/ascend_tutorial/model_support/model_and_algorithm_support.md:44:| 36 | Qwen3-VL-30B-A3B-Instruct | GRPO (fully_async) | [30B](https://huggingface.co/Qwen/Qwen3-VL-30B-A3B-Instruct) | Megatron | vllm | [`link`](https://github.com/verl-project/verl/blob/main/verl/experimental/fully_async_policy/shell/geo3k_qwen3vl_30b_megatron_6_2_npu_async.sh) | Atlas 200T A2 Box16, Atlas 800T A3 |
+examples/grpo_trainer/run_deepseek_v3_671b_megatron.sh:138:    actor_rollout_ref.rollout.top_p=1.0
+examples/grpo_trainer/run_deepseek_v3_671b_megatron.sh:139:    actor_rollout_ref.rollout.top_k=-1
+examples/grpo_trainer/run_deepseek_v3_671b_megatron.sh:141:    actor_rollout_ref.rollout.val_kwargs.top_p=0.7
+examples/grpo_trainer/run_deepseek_v3_671b_megatron.sh:142:    actor_rollout_ref.rollout.val_kwargs.top_k=-1
+docs/ascend_tutorial/model_support/examples/ascend_sglang_best_practices.rst:58:  git clone https://www.modelscope.cn/datasets/AI-ModelScope/DAPO-Math-17k.git
+docs/ascend_tutorial/model_support/examples/ascend_retool_best_pratice.rst:58:  git clone https://huggingface.co/datasets/BytedTsinghua-SIA/DAPO-Math-17k
+docs/ascend_tutorial/model_support/examples/ascend_retool_best_pratice.rst:137:  dapo_math_17k=$DATA_ROOT/dataset/BytedTsinghua-SIA/DAPO-Math-17k
+docs/ascend_tutorial/model_support/examples/ascend_retool_best_pratice.rst:243:    actor_rollout_ref.rollout.val_kwargs.top_p=0.6 \
+docs/ascend_tutorial/model_support/examples/gspo_optimization_practice.md:1:# NPU Qwen3-32B GSPO Optimization Practice
+docs/ascend_tutorial/model_support/examples/gspo_optimization_practice.md:9:GSPO通过将优化颗粒度从**token级**提升到**sequence级**，规避了GRPO会遇到的**方差急剧增大**导致训练不稳定的情况，增加了训练的稳定性，同时该算法也在一定程度上提升了算法的收敛速度。
+docs/ascend_tutorial/model_support/examples/gspo_optimization_practice.md:11:想要成功在verl仓库中成功调用到GSPO算法，需要进行如下的必要配置
+docs/ascend_tutorial/model_support/examples/gspo_optimization_practice.md:17:# GSPO策略损失模式  
+docs/ascend_tutorial/model_support/examples/gspo_optimization_practice.md:18:actor_rollout_ref.actor.policy_loss.loss_mode=gspo \ # 启用GSPO策略损失
+docs/ascend_tutorial/model_support/examples/gspo_optimization_practice.md:19:# 极小裁剪范围（GSPO特色）  
+docs/ascend_tutorial/model_support/examples/gspo_optimization_practice.md:22:# KL配置（GSPO不使用KL loss）  
+docs/ascend_tutorial/model_support/examples/gspo_optimization_practice.md:25:# 序列级损失聚合模式（GSPO核心）  
+docs/ascend_tutorial/model_support/examples/gspo_optimization_practice.md:26:actor_rollout_ref.actor.loss_agg_mode=seq-mean-token-mean \ # 序列级平均，GSPO论文推荐  
+docs/ascend_tutorial/model_support/examples/gspo_optimization_practice.md:67:git clone https://huggingface.co/datasets/BytedTsinghua-SIA/DAPO-Math-17k
+docs/ascend_tutorial/model_support/examples/dapo_multi_model_optimization_practice.md:1:# DAPO multi model optimization practice
+docs/ascend_tutorial/model_support/examples/dapo_multi_model_optimization_practice.md:3:## DAPO 介绍
+docs/ascend_tutorial/model_support/examples/dapo_multi_model_optimization_practice.md:7:DAPO的论文可以参考：[DAPO](https://arxiv.org/pdf/2503.14476)，其中包含以下几个关键技术。
+docs/ascend_tutorial/model_support/examples/dapo_multi_model_optimization_practice.md:10:* ​**Dynamic Sampling**​: 提高了训练效率和稳定性。DAPO出了一种执行动态采样的策略，并过滤掉准确率等于1和0的提示组，从而保持批次间具有有效梯度的提示数量一致。
+docs/ascend_tutorial/model_support/examples/dapo_multi_model_optimization_practice.md:14:在verl中，可以进行如下设置，从而进行DAPO算法的运行。
+docs/ascend_tutorial/model_support/examples/dapo_multi_model_optimization_practice.md:16:- **奖励模型的管理策略为 DAPO**
+docs/ascend_tutorial/model_support/examples/dapo_multi_model_optimization_practice.md:24:  `clip_ratio_low` 和 `clip_ratio_high` 用于指定 DAPO 目标函数中的 $\varepsilon_{\text {low }}$ 和 $\varepsilon_{\text {high }}$。
+docs/ascend_tutorial/model_support/examples/dapo_multi_model_optimization_practice.md:59:相关参数涉及的代码可以参考：[Recipe: Decoupled Clip and Dynamic Sampling Policy Optimization (DAPO)](https://github.com/verl-project/verl-recipe/blob/main/dapo/README.md)
+docs/ascend_tutorial/dev_guide/performance/ascend_profiling_zh.rst:6:这是一份在昇腾设备上基于FSDP或MindSpeed(Megatron)后端，使用GRPO或DAPO算法进行数据采集的教程。
+docs/ascend_tutorial/dev_guide/model_dev/evaluation.md:90:            top_k = 10,
+docs/ascend_tutorial/dev_guide/model_dev/evaluation.md:91:            top_p = 0.95,
+docs/ascend_tutorial/dev_guide/performance/ascend_profiling_en.rst:6:This is a tutorial for data collection using the GRPO or DAPO algorithm
+examples/grpo_trainer/run_qwen3_5-122b-a10b_veomni.sh:116:    actor_rollout_ref.rollout.val_kwargs.top_p=0.7 \
+examples/gspo_trainer/run_qwen3_30b_a3b_megatron.sh:2:# GSPO | MoE | vLLM rollout | Megatron training | NVIDIA GPUs
+examples/gspo_trainer/run_qwen3_30b_a3b_megatron.sh:3:# GSPO with Qwen3-30B-A3B (MoE).
+examples/gspo_trainer/run_qwen3_30b_a3b_megatron.sh:102:    actor_rollout_ref.rollout.val_kwargs.top_p=0.7
+examples/rollout_correction/run_qwen2_5_7b_fsdp_multi_rs.sh:17:rollout_is="token"                       # Token-level IS for metrics/analysis
+examples/rollout_correction/run_qwen2_5_7b_fsdp_multi_rs.sh:18:rollout_is_threshold=2.0                 # Upper threshold for IS weights
+examples/rollout_correction/run_qwen2_5_7b_fsdp_multi_rs.sh:19:rollout_is_batch_normalize="false"       # Keep raw truncated weights
+examples/rollout_correction/run_qwen2_5_7b_fsdp_multi_rs.sh:72:    algorithm.rollout_correction.rollout_is=${rollout_is}
+examples/rollout_correction/run_qwen2_5_7b_fsdp_multi_rs.sh:73:    algorithm.rollout_correction.rollout_is_threshold=${rollout_is_threshold}
+examples/rollout_correction/run_qwen2_5_7b_fsdp_multi_rs.sh:74:    algorithm.rollout_correction.rollout_is_batch_normalize=${rollout_is_batch_normalize}
+examples/rollout_correction/run_qwen2_5_7b_fsdp_multi_rs.sh:121:echo "  - rollout_is: ${rollout_is} (threshold=${rollout_is_threshold}, batch_norm=${rollout_is_batch_normalize})"
+docs/low_precision/fp8.md:57:- DAPO recipe. AIME24 online validation.
+docs/low_precision/fp8.md:92:- DAPO recipe. AIME24 online validation.
+docs/low_precision/fp8.md:163:- DAPO recipe. AIME24 online validation.
+examples/gspo_trainer/README.md:1:# GSPO (Group Sequence Policy Optimization)
+examples/gspo_trainer/README.md:3:GSPO is a GRPO-family policy-loss variant that aggregates the IS-ratio at the sequence level (`seq-mean-token-mean`) and uses a very tight clip window. It is especially useful for large MoE models.
+examples/cispo_trainer/README.md:1:# CISPO
+examples/cispo_trainer/README.md:3:CISPO (Clipped IS-weight Policy Optimization) is a policy-loss variant that decouples the lower/upper clip ratios to stabilize IS-ratio-weighted updates, used in MiniMax-M1.
+docs/ascend_tutorial/dev_guide/model_dev/parameter_and_metrics.md:86:| `actor_rollout_ref.rollout.top_k` | `-1` | Top-K 采样参数，-1 表示不启用 |
+docs/ascend_tutorial/dev_guide/model_dev/parameter_and_metrics.md:87:| `actor_rollout_ref.rollout.top_p` | `1` | Top-P（nucleus）采样参数 |
+docs/ascend_tutorial/dev_guide/model_dev/parameter_and_metrics.md:105:| `actor_rollout_ref.rollout.logprobs_mode` | `processed_logprobs` | logprobs 计算模式 |
+docs/ascend_tutorial/dev_guide/model_dev/parameter_and_metrics.md:130:| `actor_rollout_ref.rollout.val_kwargs.top_k` | `-1` | 验证时 Top-K 采样参数 |
+docs/ascend_tutorial/dev_guide/model_dev/parameter_and_metrics.md:131:| `actor_rollout_ref.rollout.val_kwargs.top_p` | `1.0` | 验证时 Top-P 采样参数 |
+docs/ascend_tutorial/dev_guide/model_dev/parameter_and_metrics.md:252:| `critic.model.lora_rank` | `0` | LoRA 秩 |
+docs/ascend_tutorial/dev_guide/model_dev/parameter_and_metrics.md:253:| `critic.model.lora_alpha` | `16` | LoRA alpha |
+docs/ascend_tutorial/dev_guide/model_dev/parameter_and_metrics.md:254:| `critic.model.target_modules` | `all-linear` | LoRA 目标模块 |
+docs/ascend_tutorial/dev_guide/model_dev/parameter_and_metrics.md:331:| `algorithm.rollout_correction.rollout_is` | `null` | 是否启用 IS 重要性采样校正 |
+docs/ascend_tutorial/dev_guide/model_dev/parameter_and_metrics.md:332:| `algorithm.rollout_correction.rollout_is_threshold` | `2.0` | IS 权重阈值 |
+docs/ascend_tutorial/dev_guide/model_dev/parameter_and_metrics.md:337:| `algorithm.rollout_correction.rollout_is_batch_normalize` | `false` | IS 权重是否批量归一化 |
+docs/ascend_tutorial/dev_guide/model_dev/parameter_and_metrics.md:385:| `actor_rollout_ref.model.lora_rank` | `0` | LoRA 秩，0 表示不使用 LoRA |
+docs/ascend_tutorial/dev_guide/model_dev/parameter_and_metrics.md:386:| `actor_rollout_ref.model.lora_alpha` | `16` | LoRA alpha |
+docs/ascend_tutorial/dev_guide/model_dev/parameter_and_metrics.md:387:| `actor_rollout_ref.model.target_modules` | `all-linear` | LoRA 目标模块 |
+docs/ascend_tutorial/dev_guide/model_dev/parameter_and_metrics.md:388:| `actor_rollout_ref.model.exclude_modules` | `null` | LoRA 排除模块 |
+docs/ascend_tutorial/dev_guide/model_dev/parameter_and_metrics.md:389:| `actor_rollout_ref.model.lora_adapter_path` | `null` | LoRA 适配器路径 |
+docs/ascend_tutorial/dev_guide/model_dev/parameter_and_metrics.md:402:| `transfer_queue.enable` | `false` | 是否启用传输队列 |
+docs/ascend_tutorial/dev_guide/model_dev/parameter_and_metrics.md:538:#### 1.3.6 Megatron LoRA 配置
+docs/ascend_tutorial/dev_guide/model_dev/parameter_and_metrics.md:542:| `model.lora.type` | `lora` | LoRA 类型 |
+docs/ascend_tutorial/dev_guide/model_dev/parameter_and_metrics.md:543:| `model.lora.merge` | `false` | 是否合并 LoRA 权重 |
+docs/ascend_tutorial/dev_guide/model_dev/parameter_and_metrics.md:544:| `model.lora.rank` | `0` | LoRA 秩，0 表示不使用 |
+docs/ascend_tutorial/dev_guide/model_dev/parameter_and_metrics.md:545:| `model.lora.alpha` | `32` | LoRA alpha |
+docs/ascend_tutorial/dev_guide/model_dev/parameter_and_metrics.md:546:| `model.lora.dropout` | `0.0` | LoRA dropout |
+docs/ascend_tutorial/dev_guide/model_dev/parameter_and_metrics.md:547:| `model.lora.target_modules` | `[linear_qkv, linear_proj, linear_fc1, linear_fc2]` | LoRA 目标模块 |
+docs/ascend_tutorial/dev_guide/model_dev/parameter_and_metrics.md:548:| `model.lora.exclude_modules` | `[]` | LoRA 排除模块 |
+docs/ascend_tutorial/dev_guide/model_dev/parameter_and_metrics.md:549:| `model.lora.dropout_position` | `pre` | LoRA dropout 位置 |
+docs/ascend_tutorial/dev_guide/model_dev/parameter_and_metrics.md:550:| `model.lora.lora_A_init_method` | `xavier` | LoRA A 矩阵初始化方法 |
+docs/ascend_tutorial/dev_guide/model_dev/parameter_and_metrics.md:551:| `model.lora.lora_B_init_method` | `zero` | LoRA B 矩阵初始化方法 |
+docs/ascend_tutorial/dev_guide/model_dev/parameter_and_metrics.md:553:| `model.lora.dtype` | `null` | LoRA 数据类型 |
+docs/ascend_tutorial/dev_guide/model_dev/parameter_and_metrics.md:554:| `model.lora.adapter_path` | `null` | LoRA 适配器路径 |
+docs/ascend_tutorial/dev_guide/model_dev/parameter_and_metrics.md:778:| `rollout_corr/rollout_is_mean` | IS 权重均值 |
+docs/ascend_tutorial/dev_guide/model_dev/parameter_and_metrics.md:779:| `rollout_corr/rollout_is_max` | IS 权重最大值 |
+docs/ascend_tutorial/dev_guide/model_dev/parameter_and_metrics.md:780:| `rollout_corr/rollout_is_min` | IS 权重最小值 |
+docs/ascend_tutorial/dev_guide/model_dev/parameter_and_metrics.md:781:| `rollout_corr/rollout_is_std` | IS 权重标准差 |
+docs/ascend_tutorial/dev_guide/model_dev/parameter_and_metrics.md:782:| `rollout_corr/rollout_is_ratio_fraction_high` | 超过上限阈值的 IS 权重比例 |
+docs/ascend_tutorial/dev_guide/model_dev/parameter_and_metrics.md:783:| `rollout_corr/rollout_is_ratio_fraction_low` | 低于下限阈值的 IS 权重比例 |
+docs/ascend_tutorial/dev_guide/model_dev/parameter_and_metrics.md:784:| `rollout_corr/rollout_is_eff_sample_size` | 有效样本大小（ESS） |
+docs/ascend_tutorial/dev_guide/model_dev/parameter_and_metrics.md:785:| `rollout_corr/rollout_is_seq_mean` | 序列级 IS 权重均值 |
+docs/ascend_tutorial/dev_guide/model_dev/parameter_and_metrics.md:786:| `rollout_corr/rollout_is_seq_std` | 序列级 IS 权重标准差 |
+docs/ascend_tutorial/dev_guide/model_dev/parameter_and_metrics.md:787:| `rollout_corr/rollout_is_seq_max` | 序列级 IS 权重最大值 |
+docs/ascend_tutorial/dev_guide/model_dev/parameter_and_metrics.md:788:| `rollout_corr/rollout_is_seq_min` | 序列级 IS 权重最小值 |
+docs/ascend_tutorial/dev_guide/model_dev/parameter_and_metrics.md:789:| `rollout_corr/rollout_is_seq_max_deviation` | 序列级 IS 权重与理想值 1.0 的最大偏差 |
+docs/ascend_tutorial/dev_guide/model_dev/parameter_and_metrics.md:790:| `rollout_corr/rollout_is_seq_fraction_high` | 序列级 IS 权重超过上限的比例 |
+docs/ascend_tutorial/dev_guide/model_dev/parameter_and_metrics.md:791:| `rollout_corr/rollout_is_seq_fraction_low` | 序列级 IS 权重低于下限的比例 |
+docs/ascend_tutorial/dev_guide/model_dev/parameter_and_metrics.md:792:| `rollout_corr/rollout_is_batch_norm_factor` | IS 权重批量归一化因子（仅 `rollout_is_batch_normalize=True` 时打印） |
+examples/cispo_trainer/run_qwen3_8b_fsdp.sh:2:# CISPO | text | vLLM rollout | FSDP training | NVIDIA GPUs
+examples/cispo_trainer/run_qwen3_8b_fsdp.sh:3:# CISPO is a policy-loss variant on top of GRPO that decouples high/low clip ratios.
+docs/advance/rollout_skip.rst:23:RolloutSkip is already supported in ``RayDAPOTrainer`` and ``RayPPOTrainer``.
+docs/advance/grafana_prometheus.md:17:![fully_async_policy_structure](https://github.com/ArronHZG/verl-community/blob/main/docs/grafana_validate.png?raw=true)
+docs/advance/grafana_prometheus.md:21:![fully_async_policy_structure](https://github.com/ArronHZG/verl-community/blob/main/docs/grafana_fully_async_train.png?raw=true)
+docs/advance/grafana_prometheus.md:145:    -- python3 verl.experimental.fully_async_policy.fully_async_main \
+docs/advance/ppo_lora.rst:1:RL(HF) algorithms with LoRA Support
+docs/advance/ppo_lora.rst:6:We support LoRA (Low-Rank Adaptation) for reinforcement learning algorithms such as PPO, GRPO, and others.
+docs/advance/ppo_lora.rst:8:LoRA is a parameter-efficient fine-tuning technique that injects trainable low-rank matrices into pre-trained weights (typically linear layers). This reduces memory footprint and compute cost, making it possible to fine-tune large models with limited hardware.
+docs/advance/ppo_lora.rst:14:- simplify model transfer and deployment, as only LoRA adapters need to be saved,
+docs/advance/ppo_lora.rst:15:- Combine with techniques like `SLoRA <https://arxiv.org/abs/2311.03285>`_ or `CCoE <https://arxiv.org/abs/2407.11686>`_ to serve multiple LoRA adapters efficiently
+docs/advance/ppo_lora.rst:17:This guide explains how to enable LoRA in RL training and configure related parameters.
+docs/advance/ppo_lora.rst:28:2. LoRA is supported via huggingface peft with fsdp/fsdp2 and both vllm and sglang rollout backends.
+docs/advance/ppo_lora.rst:33:3. Required configurations for LoRA:
+docs/advance/ppo_lora.rst:36:- `actor_rollout_ref.model.lora_alpha`: float, the alpha term in LoRA
+docs/advance/ppo_lora.rst:38:- `actor_rollout_ref.model.target_modules`: the target modules for LoRA. Typically set to "all-linear".
+docs/advance/ppo_lora.rst:40:4. Optional configurations for LoRA:
+docs/advance/ppo_lora.rst:42:- `actor_rollout_ref.model.lora_adapter_path`: string, path to a pretrained LoRA adapter directory. 
+docs/advance/ppo_lora.rst:45:- `actor_rollout_ref.model.lora.merge`: bool, whether to merge LoRA adapters into the base model weights before transferring to the rollout engine (vLLM or SGLang).
+docs/advance/ppo_lora.rst:46:   If True, LoRA adapters are merged into base weights and full merged weights are synced. If False, only LoRA adapter deltas are transferred natively.
+docs/advance/ppo_lora.rst:52:- `actor_rollout_ref.rollout.layered_summon=True`: this enables the actor-model to gather the FSDP shards per layers when synchronizing the LoRA Adapter to vLLM, thereby reducing GPU peak memory. Recommended if the model is very large (70B+) or the GPU memory is limited (< 48GB)
+docs/advance/ppo_lora.rst:66:You need to install and enable Megatron-Bridge for Megatron LoRA support.
+docs/advance/ppo_lora.rst:73:**Key Differences from FSDP LoRA:**
+docs/advance/ppo_lora.rst:75:1. **LoRA Implementation**: Verl Megatron backend uses Megatron-Bridge's native LoRA implementation, which differs from HuggingFace PEFT.
+docs/advance/ppo_lora.rst:77:2. **Weight Sync / Refit Mechanism**: Currently, Megatron-Bridge can support syncing weights by either merging LoRA adapters into the base model weights before transferring to vLLM (for better inference speed but more refit time and potential precision loss), as well as loading separate adapters.
+docs/advance/ppo_lora.rst:79:**Configuration for Megatron LoRA:**
+docs/advance/ppo_lora.rst:86:        # LoRA type: "lora", "vlm_lora", "canonical_lora", or "dora"
+docs/advance/ppo_lora.rst:89:        # whether to sync weights / refit by either merging LoRA adapters into the base model weights before transferring to vLLM (for better inference speed but more refit time and potential precision loss). If this is False, it will load separate adapters.
+docs/advance/ppo_lora.rst:92:        # LoRA rank (Dimension of the low-rank projection space.). Set to 0 to disable LoRA
+docs/advance/ppo_lora.rst:101:        # A list of module names to apply LoRA to.
+docs/advance/ppo_lora.rst:102:        # For fused LoRA, Defaults to all linear layers ['linear_qkv', 'linear_proj', 'linear_fc1', 'linear_fc2'].
+docs/advance/ppo_lora.rst:103:        # For canonical LoRA: ["linear_q", "linear_k", "linear_v", "linear_proj", "linear_fc1_up", "linear_fc1_gate", "linear_fc2"]
+docs/advance/ppo_lora.rst:104:        # - 'linear_qkv': Apply LoRA to the fused linear layer used for query, key, and value projections in self-attention
+docs/advance/ppo_lora.rst:105:        # - 'linear_proj': Apply LoRA to the linear layer used for projecting the output of self-attention
+docs/advance/ppo_lora.rst:106:        # - 'linear_fc1': Apply LoRA to the first fully-connected layer in MLP
+docs/advance/ppo_lora.rst:107:        # - 'linear_fc2': Apply LoRA to the second fully-connected layer in MLP
+docs/advance/ppo_lora.rst:109:        # target_modules=['*.layers.0.*.linear_qkv', '*.layers.1.*.linear_qkv'] to add LoRA to only linear_qkv on the first two layers
+docs/advance/ppo_lora.rst:114:        # By default, MoE routers are excluded from LoRA adaptation, and you will need to specify "router" in target_modules to include them.
+docs/advance/ppo_lora.rst:137:        # Parameter data type for LoRA weights. Default to null, which will use model's dtype.
+docs/advance/ppo_lora.rst:140:        # Path to pre-trained LoRA adapter weights (null to train from scratch)
+docs/advance/ppo_lora.rst:143:        # Whether to fully shard LoRA adapters. Defaults to False
+docs/advance/ppo_lora.rst:144:        # https://docs.vllm.ai/en/latest/api/vllm/config/lora/#vllm.config.lora.LoRAConfig.fully_sharded_loras
+docs/advance/ppo_lora.rst:147:        # VLMLoRA additionally allows the user to specify whether the language or vision models should be frozen.
+docs/advance/ppo_lora.rst:154:LoRA training experiment with Qwen3-8B on 8 * H200 single node comparing FSDP and Megatron backend (script adapted from examples/tuning/lora/run_qwen3_8b_fsdp.sh):
+docs/advance/ppo_lora.rst:166:2. **LoRA Rank**:
+docs/advance/ppo_lora.rst:169:- LoRA rank recommendation from @thelongestusernameofall:
+docs/advance/ppo_lora.rst:171:  - A very small lora_rank can lead to slower convergence or worse training performance. It is recommended to set lora_rank to be>=32. Tests have shown that for a 0.5B model, with lora_rank=32,the training convergence speed and final performance are almost identical to non-LoRA training
+docs/advance/ppo_lora.rst:172:  - For a 32B model,with lora_rank=128,the training convergence speed and final performance are also almost identical to non-LoRA training.
+docs/advance/ppo_lora.rst:209:- LoRA training from scratch: examples/tuning/lora/run_qwen3_8b_fsdp.sh
+docs/advance/ppo_lora.rst:210:- LoRA training from adapter path: examples/tuning/lora/run_qwen3_8b_from_adapter_fsdp.sh
+docs/advance/ppo_lora.rst:211:- LoRA training for VLMs: examples/tuning/lora/run_qwen2_5_vl_7b_fsdp.sh
+docs/advance/ppo_lora.rst:215:- LoRA training with MoE: examples/tuning/lora/run_qwen3_30b_a3b_megatron.sh
+docs/advance/one_step_off.md:12:workflows of established methods like PPO, GRPO, and DAPO. In each step, training samples are generated by the latest
+docs/advance/one_step_off.md:18:For example, in DAPO 32B training, the Rollout phase accounts for approximately 70% of the total time,
+docs/advance/one_step_off.md:21:![DAPO 32B Math Performance](https://raw.githubusercontent.com/eric-haibin-lin/verl-community/refs/heads/main/docs/dapo_32b_math.png)
+docs/advance/one_step_off.md:23:> source data: https://wandb.ai/verl-org/DAPO%20Reproduction%20on%20verl/workspace?nw=nwusertongyuxuan361
+docs/advance/one_step_off.md:34:![One Step Off Policy Diagram](https://raw.githubusercontent.com/eric-haibin-lin/verl-community/refs/heads/main/docs/one_step_off_policy.png)
+docs/advance/one_step_off.md:58:- **Algorithm**: DAPO
+docs/advance/one_step_off.md:239:python3 -m verl.experimental.one_step_off_policy.async_main_ppo \
+docs/advance/one_step_off.md:255:python3 -m verl.experimental.one_step_off_policy.async_main_ppo \
+docs/advance/reward_loop.rst:137:- **dapo**: DAPO implementation with an overlong reward penalty.
+docs/advance/reward_loop.rst:238:      sampling_params = {"temperature": 0.7, "top_p": 0.8, "max_tokens": 4096}
+docs/advance/mtp.md:45:![fully_async_policy_revenue](
+docs/advance/agent_loop.rst:155:But based on our recent experience on single-turn training on DAPO and multi-turn training on `retool <https://github.com/verl-project/verl-recipe/tree/main/retool>`_,
+docs/advance/fully_async.md:19:The one_step_off_policy alleviates the problem of long rollout times and achieves some gains in training efficiency by
+docs/advance/fully_async.md:25:We borrow from their methods and implemented them in VERL. The fully_async_policy supports asynchronous, streaming, and
+docs/advance/fully_async.md:28:By reasonably setting parameters such as resource allocation and parameter synchronization frequency, fully_async_policy
+docs/advance/fully_async.md:65:The overall architecture of fully_async_policy is shown in the figure below. fully_async_policy mainly consists of four
+docs/advance/fully_async.md:68:![fully_async_policy_structure](
+docs/advance/fully_async.md:69:https://github.com/ArronHZG/verl-community/blob/main/docs/fully_async_policy_structure.svg?raw=true)
+docs/advance/fully_async.md:85:![fully_async_policy_revenue](
+docs/advance/fully_async.md:86:https://github.com/ArronHZG/verl-community/blob/main/docs/fully_async_policy_revenue.svg?raw=true)
+docs/advance/fully_async.md:164:  the settings of algorithms like PPO/GRPO/DAPO, when calculating importance sampling,
+docs/advance/fully_async.md:175:  the [Rollout Importance Sampling](https://verl.readthedocs.io/en/latest/advance/rollout_is.html)
+docs/advance/fully_async.md:230:![fully_async_policy_mode](
