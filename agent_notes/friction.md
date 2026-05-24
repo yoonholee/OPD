@@ -12,3 +12,9 @@
 - Qwen3.5 vLLM init with default `max_num_seqs=1024` failed: available Mamba cache blocks 463. Fix: set `max_num_seqs=32` for tiny smoke.
 - Qwen3.5 + activation offload failed during backward with `assert not isinstance(tensor, tuple)` in `activation_offload.py`. Fix: disable `actor_rollout_ref.model.enable_activation_offload`.
 - Local `date -Is` is GNU-only; macOS BSD `date` rejected it while writing delete proof. Use `date -u +%Y-%m-%dT%H:%M:%SZ`.
+- `numpy<2` is wrong for the stable Qwen3.5/vLLM 0.21 smoke. The locked env uses NumPy 2.3.5; forcing NumPy 1.x conflicts with the current OpenCV/vLLM stack.
+- G4 creation with `pd-balanced` fails. Use `BOOT_DISK_TYPE=hyperdisk-balanced` for `g4-standard-*`.
+- Hardcoded `NCCL_SOCKET_IFNAME=ens7` fails off G2/L4. G4 used `ens3`; A2/A100 used `ens8`. Route-detect the NIC.
+- Qwen3.5 VLM text-only batch >1 failed in `extract_multi_modal_inputs -> torch.cat` because `multi_modal_inputs` shapes varied. Use `data.return_multi_modal_inputs=False`.
+- vLLM FlashInfer sampler JIT stalled under colocated 4-worker Ray on Qwen3.5. Use `VLLM_USE_FLASHINFER_SAMPLER=0`; expect separate GDN/FLA Triton warmup.
+- OPD 10-step first failed in `RewardModelWorker._compute_entropy_safe` with non-contiguous logits and `.view`. Fix: `.reshape`, covered by `test_reward_entropy_accepts_non_contiguous_logits`.

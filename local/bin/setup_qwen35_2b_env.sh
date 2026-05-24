@@ -4,8 +4,8 @@ set -euo pipefail
 ROOT=${ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)}
 VENV=${VENV:-$ROOT/.venv-qwen35-2b}
 PYTHON_VERSION=${PYTHON_VERSION:-3.12}
-TRANSFORMERS_SPEC=${TRANSFORMERS_SPEC:-"transformers @ git+https://github.com/huggingface/transformers.git@main"}
-VLLM_INDEX=${VLLM_INDEX:-https://wheels.vllm.ai/nightly}
+SMOKE_PROJECT=${SMOKE_PROJECT:-$ROOT/local/qwen35_2b_smoke}
+INSTALL_FLASH_ATTN=${INSTALL_FLASH_ATTN:-0}
 
 cd "$ROOT"
 
@@ -19,34 +19,13 @@ uv venv --python "$PYTHON_VERSION" "$VENV"
 # shellcheck source=/dev/null
 source "$VENV/bin/activate"
 
-uv pip install -U pip setuptools wheel packaging ninja
-uv pip install \
-  accelerate \
-  codetiming \
-  datasets \
-  dill \
-  hf-transfer \
-  hydra-core \
-  "math-verify" \
-  "numpy<2" \
-  pandas \
-  peft \
-  "pyarrow>=19" \
-  pybind11 \
-  pylatexenc \
-  "ray[default]>=2.41.0" \
-  tensorboard \
-  "tensordict>=0.8.0,<=0.10.0,!=0.9.0" \
-  torchdata \
-  torchvision \
-  wandb \
-  qwen-vl-utils
+SYNC_ARGS=(--project "$SMOKE_PROJECT" --frozen --no-dev)
+if [[ "$INSTALL_FLASH_ATTN" == "1" ]]; then
+  SYNC_ARGS+=(--extra flash-attn)
+fi
+UV_PROJECT_ENVIRONMENT="$VENV" uv sync "${SYNC_ARGS[@]}"
 
-uv pip install "$TRANSFORMERS_SPEC"
-uv pip install --torch-backend=auto --extra-index-url "$VLLM_INDEX" vllm
-uv pip install "numpy<2"
-
-# Avoid verl[vllm], whose vendored constraint excludes vLLM nightly.
+# Avoid verl[vllm], whose vendored constraints can lag current pinned vLLM.
 uv pip install -e ./verl --no-deps
 
 python - <<'PY'

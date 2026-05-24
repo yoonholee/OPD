@@ -1817,7 +1817,7 @@ class RewardModelWorker(Worker, DistProfilerExtension):
         vocab_size = original_shape[-1]
         
         # Flatten to [-1, vocab_size]
-        logits_flat = logits.view(-1, vocab_size)
+        logits_flat = logits.reshape(-1, vocab_size)
         
         entropy_list = []
         for i in range(0, logits_flat.size(0), chunk_size):
@@ -1832,7 +1832,7 @@ class RewardModelWorker(Worker, DistProfilerExtension):
         entropy_flat = torch.cat(entropy_list, dim=0)
         
         # Reshape back to original shape minus vocab dim
-        return entropy_flat.view(original_shape[:-1])
+        return entropy_flat.reshape(original_shape[:-1])
 
     def _compute_teacher_top_k_log_probs(self, logits, student_ids, top_k, strategy="only_stu", chunk_size=1024):
         # logits: (N, Vocab)

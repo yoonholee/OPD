@@ -13,9 +13,20 @@
 # limitations under the License.
 import os
 
+import torch
 from omegaconf import OmegaConf
 
-from verl.workers.fsdp_workers import ActorRolloutRefWorker
+from verl.workers.fsdp_workers import ActorRolloutRefWorker, RewardModelWorker
+
+
+def test_reward_entropy_accepts_non_contiguous_logits():
+    logits = torch.randn(2, 3, 7).transpose(0, 1)
+    assert not logits.is_contiguous()
+
+    entropy = RewardModelWorker._compute_entropy_safe(None, logits, chunk_size=2)
+
+    assert entropy.shape == logits.shape[:-1]
+    assert torch.isfinite(entropy).all()
 
 
 def test_actor_rollout_ref_worker_actor_ref_model():

@@ -2,159 +2,88 @@
 
 ## Bottom line
 
-THUNLP/OPD can run `Qwen/Qwen3.5-2B` on a 4-GPU single node with small local compatibility patches plus Transformers main and vLLM nightly.
-This is smoke-scale only, not paper-scale reproduction.
+THUNLP/OPD now runs `Qwen/Qwen3.5-2B` on one 4-GPU GCP node with stable pins, not nightly wheels.
+Use the committed `local/qwen35_2b_smoke/pyproject.toml` and `uv.lock`.
 
-Recommendation: keep THUNLP/OPD as the paper baseline, use these patches for Qwen3.5-2B, and keep `use_remove_padding=False` until the FA2/remove-padding crash is isolated.
+Best current recipe: G4 Spot, 4x RTX PRO 6000 Blackwell, `transformers==5.9.0`, `vllm==0.21.0`, Torch `2.11.0+cu130`, `data.return_multi_modal_inputs=False`, `VLLM_USE_FLASHINFER_SAMPLER=0`, `gdn_prefill_backend=triton`.
 
-## Current verified runs
+## 10-step scale runs
 
-Hardware: GCP `g2-standard-48`, 4x L4, `us-west1-a`.
-Workload: DAPO-Math tiny local smoke, `SMOKE_N=8`, `TRAIN_STEPS=1`, response length 32.
+Hardware: GCP `g4-standard-192`, 4x RTX PRO 6000 Blackwell, Spot, `us-west1-a`.
+Data: local DAPO-Math smoke, `SMOKE_N=96`, batch 8 for 10-step GRPO/OPD, response 64.
+Metrics below use steps 2-10 to remove first-step vLLM/GDN warmup.
 
-| Run | Status | Step time | Throughput | Max alloc | Notes |
+| Run | Status | Step time | Throughput | Max alloc | Signal |
 | --- | --- | ---: | ---: | ---: | --- |
-| GRPO, Qwen3.5-2B | rc 0 | 11.76s | 14.77 tok/s | 15.71 GB | Rule rewards all zero, so pg loss and grad norm were zero. |
-| OPD, same-weight teacher/student | rc 0 | 12.34s | 14.08 tok/s | 15.70 GB | top-k overlap 1.0, reward mean 5.3e-8, grad norm 2.19e-6. |
+| GRPO, batch 8 | rc 0 | 2.26s | 148.7 tok/s | 58.9 GB | Rewards all zero, so pg loss/grad norm zero. Infrastructure smoke only. |
+| OPD same-weight teacher, batch 8 | rc 0 | 2.51s | 138.8 tok/s | 58.9 GB | Nonzero OPD rewards from train/teacher drift. Grad norm mean 0.79, top-k overlap mean 0.989. |
+| GRPO remove-padding probe, batch 4 | rc 0 | 2.00s | 63.4 tok/s | 49.4 GB | `Actor use_remove_padding=True` ran 3 steps. Not yet apples-to-apples. |
 
 Evidence:
 
-- GRPO: `opd-qwen35-2b-l4-0524-1159-final/gcp_runs/20260524_122502_qwen35_2b_grpo_retry5/grpo_qwen35_2b.log`
-- OPD: `opd-qwen35-2b-l4-0524-1159-final/gcp_runs/20260524_122711_qwen35_2b_opd_retry/opd_qwen35_2b.log`
-- Teardown: `opd-qwen35-2b-l4-0524-1159-final/delete-proof.txt`
+- GRPO 10: `agent_notes/gcp_runs/opd-g4-qwen35-scale5-0524-1557/gcp_runs/20260524_225852_g4_grpo10_b8_r64_textonly_no_flashinfer_sampler/grpo_qwen35_2b.log`
+- OPD 10 fixed: `agent_notes/gcp_runs/opd-g4-qwen35-opdfix-0524-1609/gcp_runs/20260524_231105_g4_opd10_b8_r64_reshape_textonly_no_flashinfer_sampler/opd_qwen35_2b.log`
+- Remove-padding probe: `agent_notes/gcp_runs/opd-g4-qwen35-scale5-0524-1557/gcp_runs/20260524_230425_g4_rmpad_probe_textonly_no_flashinfer_sampler/grpo_qwen35_2b.log`
 
-## What had to change
+## What changed in this pass
 
-### Code patches
+- Replaced shell-floating/nightly installs with `local/qwen35_2b_smoke/pyproject.toml` plus `uv.lock`.
+  - Direct pins: `transformers==5.9.0`, `vllm==0.21.0`, optional `flash-attn==2.8.3` extra.
+  - Lock resolved Linux GPU env to Torch `2.11.0+cu130`, NumPy `2.3.5`, Ray `2.55.1`.
+- `setup_qwen35_2b_env.sh` now runs `uv sync --frozen` into `.venv-qwen35-2b`, then installs local `verl` editable with `--no-deps`.
+- `run_qwen35_2b_smoke.sh` gained tunable batch/length/vLLM knobs, GCP NIC autodetect, text-only VLM collation guard, and vLLM FlashInfer sampler disable.
+- `gcp_qwen35_2b_l4_smoke.sh` now handles G4/A2/A3 shapes by allowing empty `ACCELERATOR`, `BOOT_DISK_TYPE`, Spot mode, and custom `RUN_COMMANDS`.
+- `RewardModelWorker._compute_entropy_safe` now uses `reshape`, not `view`, so OPD reward entropy accepts non-contiguous logits from the Qwen3.5/Transformers 5 path.
+- `attention_utils.py` falls back to PyTorch padding helpers if `flash_attn.bert_padding` is unavailable.
+- Added probability correction tests for exact match and token/sequence importance sampling.
+- Added a non-contiguous logits entropy test for the OPD reward path.
 
-- Transformers auto-class shim: `verl/verl/utils/transformers_compat.py`
-  - Added compatibility for `AutoModelForImageTextToText`.
-  - Added `conditional_generation_auto_class()`, `auto_class_from_remote_name()`, and `mapping_keys()` helpers.
-  - Reason: Qwen3.5 is a VLM-style repo using `qwen3_5` and image/text auto classes, not the old plain CausalLM path.
+## Root causes found
 
-- Model loading: `verl/verl/utils/model.py`, `verl/verl/model_merger/base_model_merger.py`
-  - Mapped `ForConditionalGeneration` and `ForImageTextToText` to the right HF auto class.
-  - Reason: THUNLP's vendored veRL assumed older architecture names.
+- Nightly dependency root cause: Qwen3.5 initially needed newer Transformers/vLLM than THUNLP's frozen stack. Stable `transformers==5.9.0` plus `vllm==0.21.0` now cover the path.
+- Batch collation root cause: `Qwen/Qwen3.5-2B` is VLM-style. Text-only batches still produced variable `multi_modal_inputs`; `data.return_multi_modal_inputs=False` fixes batch >1.
+- OPD failure root cause: reward logits were non-contiguous. THUNLP code used `.view`; `.reshape` fixes it.
+- GCP NIC root cause: interface names differ by machine. Observed G2/L4 `ens7`, G4 `ens3`, A2/A100 `ens8`; route-based autodetect is safer.
+- G4 boot disk root cause: G4 requires `hyperdisk-balanced`; `pd-balanced` fails at create.
+- vLLM init root cause: FlashInfer sampler JIT can stall/race under colocated Ray workers; `VLLM_USE_FLASHINFER_SAMPLER=0` avoids that path. GDN/FLA Triton warmup still costs the first step.
 
-- Actor/ref and reward worker loading: `verl/verl/workers/fsdp_workers.py`
-  - Actor/ref selection now uses the compatibility helpers.
-  - RewardModelWorker now uses `get_hf_auto_model_class(model_config)` instead of hardcoded `AutoModelForCausalLM`.
-  - RewardModelWorker accepts `attn_implementation` from config.
-  - Reason: OPD teacher loading fails for Qwen3.5 if treated as CausalLM.
+## GPU probes
 
-- vLLM LoRA import shim: `verl/verl/utils/vllm/utils.py`
-  - Fallback import for `LoRAModel` from `vllm.lora.worker_manager` or `vllm.lora.lora_model`.
-  - Reason: vLLM nightly no longer exposes `vllm.lora.models`.
+- A100: `a2-highgpu-4g`, `us-west1-b`, Standard created and reached `nvidia-smi`, but source run was stopped to save cost after vLLM/FlashInfer JIT stall.
+- H100: `a3-highgpu-4g`, `us-west1-a`, Spot stocked out.
+- G4: `g4-standard-192`, `us-west1-a`, Spot created. Needs `hyperdisk-balanced`. This was the successful scale path.
 
-- Local scripts: `local/bin/setup_qwen35_2b_env.sh`, `local/bin/run_qwen35_2b_smoke.sh`, `local/bin/gcp_qwen35_2b_l4_smoke.sh`
-  - Added reproducible env setup, local data prep, Qwen3.5 probes, GRPO smoke, OPD smoke, and GCP lifecycle wrapper.
+Evidence:
 
-### Runtime knobs
+- GPU probe logs: `agent_notes/gcp_runs/gpu_type_probe_20260524_150032/`, `agent_notes/gcp_runs/gpu_type_probe_g4_spot_20260524_150412/`
+- Failed OPD before reshape: `agent_notes/gcp_runs/opd-g4-qwen35-scale5-0524-1557/gcp_runs/20260524_230239_g4_opd10_b8_r64_textonly_no_flashinfer_sampler/opd_qwen35_2b.log`
+- A100 stall evidence: `agent_notes/gcp_runs/opd-a100-qwen35-scale4-std-0524-1540/`
 
-Required for the passing smoke:
+## Throughput notes
 
-- Transformers main plus vLLM nightly.
-  - Why: the frozen stack does not know `qwen3_5`; vLLM stable did not have the needed Qwen3.5 path.
+- Warm steady-state is fast: GRPO step 2-10 mean 2.26s, OPD step 2-10 mean 2.51s.
+- First step is not representative: ~25-26s because vLLM captures CUDA graphs and compiles Qwen3.5 GDN/FLA kernels.
+- OPD adds ~0.25s/step over GRPO here, mostly teacher reward/logprob work. `compute_rm_score` after warmup is ~0.215s/step.
+- Remove-padding no longer hard-crashes in the 3-step probe, but it needs an apples-to-apples batch-8 run before claiming throughput win.
 
-- `actor_rollout_ref.model.use_remove_padding=False`.
-  - Why: prior 4xL4 THUNLP runs killed Ray workers with remove-padding enabled, even for Qwen3 text models.
+## Probability drift / OPD caution
 
-- `actor_rollout_ref.model.enable_activation_offload=False`.
-  - Why: activation offload hit `activation_offload.py` tuple assertion during backward.
+Same-weight teacher/student is not mathematically exact under this stack.
+Observed train-vs-rollout probability diff in successful 10-step runs:
 
-- `actor_rollout_ref.actor.use_torch_compile=False`, `actor_rollout_ref.ref.use_torch_compile=False`.
-  - Why: avoids compile overhead and TorchInductor fragility on small L4 smokes.
+- GRPO max diff mean: 0.059, mean diff mean: 0.00346.
+- OPD max diff mean: 0.058, mean diff mean: 0.00351.
+- OPD same-weight teacher still produced rewards with max around 0.05 by step 3 and nonzero gradients.
 
-- `actor_rollout_ref.rollout.gpu_memory_utilization=0.45`.
-  - Why: 0.22 left no available KV/Mamba cache blocks.
+Mitigations to keep:
 
-- `actor_rollout_ref.rollout.max_num_seqs=32`.
-  - Why: default 1024 exceeded available Mamba cache blocks.
+- Same tokenizer/chat template/logit processors/dtype/attention backend where possible.
+- Temperature 1.0, top-p 1.0, no top-k unless the mask is explicit.
+- Use vLLM processed logprobs if sampling processors are enabled.
+- Keep exact-match and importance-sampling tests around the train/inference server boundary.
+- For real OPD, add same-weight calibration/deadband before treating tiny probability deltas as learning signal.
 
-- `limit_mm_per_prompt.image=0`, `limit_mm_per_prompt.video=0`.
-  - Why: text-only Qwen3.5 vLLM probes still tried multimodal dummy inputs unless both limits were zero.
+## Current resource state
 
-- `gdn_prefill_backend=triton`.
-  - Why: avoids slow/fragile GDN prefill kernel path during vLLM init.
-
-- GCP NCCL socket settings: `NCCL_NET=Socket`, `NCCL_SOCKET_IFNAME=ens7`, `NCCL_IB_DISABLE=1`.
-  - Why: G2/L4 uses `ens7`; forcing `eth0` failed.
-
-## Failures fixed on the way
-
-| Failure | Root cause | Fix |
-| --- | --- | --- |
-| `ModuleNotFoundError: vllm.lora.models` | vLLM nightly API drift | LoRAModel import fallback |
-| No KV/Mamba cache blocks | vLLM memory cap too low | GPU memory utilization 0.45 |
-| `max_num_seqs (1024) exceeds available Mamba cache blocks` | Qwen3.5 Mamba cache needs one block per decode seq | `max_num_seqs=32` |
-| Activation offload tuple assertion | THUNLP activation offload incompatible with this Qwen3.5/Transformers-main checkpointing path | Disable activation offload |
-| NCCL invalid usage / no socket interface | Wrong interface assumption on GCP G2 | `NCCL_SOCKET_IFNAME=ens7` |
-| Tarball missed `verl.utils.checkpoint` | `--exclude checkpoint` matched vendored code path | Do not globally exclude `checkpoint` |
-
-## Earlier baseline smokes
-
-- THUNLP GRPO, Qwen3-0.6B, 4xL4, 1 step, `use_remove_padding=False`.
-  - Evidence: `20260524_182510_l4_final/thunlp_grpo_qwen3_0p6b_no_remove_padding_1024.log`
-  - rc 0, throughput 24.97 tok/s, max alloc 5.81 GB, step 6.96s.
-
-- THUNLP OPD, same-weight teacher/student, Qwen3-0.6B, 4xL4, 1 step, `use_remove_padding=False`.
-  - Evidence: `20260524_182510_l4_final/thunlp_opd_qwen3_0p6b_no_remove_padding_1024.log`
-  - rc 0, throughput 27.33 tok/s, top-k overlap 1.0, grad norm 7.7e-7.
-
-- Clean 4-GPU NCCL all-reduce on L4 passed after stopping Ray.
-  - Evidence: `20260524_182510_l4_final/nccl_clean_after_ray_stop.log`
-
-## Fork/import notes
-
-Import now from THUNLP/OPD:
-
-- OPD token reward path and top-k diagnostics.
-- Paper-matching configs and DAPO-Math processing.
-
-Import selectively from upstream veRL:
-
-- `vexact` zero-mismatch design as a north star.
-- Token rollout importance-sampling hooks.
-- `fully_async_policy`, `one_step_off_policy`, and transfer queue only after the baseline is stable.
-
-Import selectively from EasyR1:
-
-- LoRA adapter tensor sync into vLLM.
-- DAPO online filtering and clip low/high/dual config.
-- Better small-model examples and config ergonomics.
-- Use Docker/Apptainer if evaluating seriously. Bare source install was fragile.
-
-Consider Prime-RL later for teacher-loop architecture:
-
-- Explicit `rl`, `opd`, and `sft` modes.
-- Separate orchestrator/trainer/inference services.
-- Local vLLM teacher requirement for OPD token logprobs.
-- Heavier install and submodules made quick source install fail.
-
-Do not prioritize RAGEN/SkyRL for this baseline:
-
-- RAGEN is agent/env oriented.
-- SkyRL is interesting for Tinker-compatible APIs and async agent RL, not THUNLP OPD reproduction.
-
-## Teacher-student probability diff mitigations
-
-- Use identical tokenizer, chat template, dtype, attention implementation, TP size, backend, and logit processors.
-- Use the same backend for teacher and student logprobs when measuring OPD reward.
-- For vLLM, use `processed_logprobs` if temperature is not 1.0.
-- Keep temperature 1.0, top_p 1.0, top_k disabled unless the rollout mask is preserved and reused.
-- Add same-weight calibration or an epsilon deadband before using raw probability deltas as reward.
-- Prefer `use_remove_padding=False` on this stack until rmpad is fixed.
-
-## GCP resources
-
-Attempted:
-
-- 4xH100 spot: unavailable across tried zones.
-- 1xH100 spot: provisioned, Qwen3.5 Transformers probe passed, then preempted.
-- 4xL4 on-demand: completed final GRPO and OPD smokes.
-
-Deleted:
-
-- `opd-4xl4-0524-1054`, `us-west1-a`
-- `opd-1xh100-0524-1032-uswest4a`, `us-west4-a`
-- `opd-qwen35-2b-l4-0524-1159`, `us-west1-a`
+All GCP VMs from this pass were deleted.
+Final `gcloud compute instances list` returned no rows.

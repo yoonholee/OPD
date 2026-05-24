@@ -1,0 +1,36 @@
+[project]
+name = "opd-qwen35-2b-smoke"
+version = "0.0.0"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+  "accelerate",
+  "codetiming",
+  "datasets",
+  "dill",
+  "hf-transfer",
+  "hydra-core",
+  "math-verify",
+  "ninja",
+  "numpy>=2,<3",
+  "packaging",
+  "pandas",
+  "peft",
+  "pyarrow>=19",
+  "pybind11",
+  "pylatexenc",
+  "qwen-vl-utils",
+  "ray[default]>=2.41.0",
+  "tensorboard",
+  "tensordict>=0.8.0,<=0.10.0,!=0.9.0",
+  "torchdata",
+  "torchvision",
+  "wandb",
+  "transformers==5.9.0",
+  "vllm==0.21.0",
+]
+
+[project.optional-dependencies]
+flash-attn = ["flash-attn==2.8.3"]
+
+[tool.uv]
+package = false

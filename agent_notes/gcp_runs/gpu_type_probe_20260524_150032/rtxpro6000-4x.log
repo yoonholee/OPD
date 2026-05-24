@@ -1,0 +1,5 @@
+## rtxpro6000-4x zone=us-west1-a machine=g4-standard-192 prov=STANDARD accel=none name=opd-probe-rtxpro6000-4x-0524-150252
+ERROR: (gcloud.compute.instances.create) Could not fetch resource:
+ - pd-balanced disk type cannot be used by g4-standard-192 machine type.
+
+CREATE_FAILED

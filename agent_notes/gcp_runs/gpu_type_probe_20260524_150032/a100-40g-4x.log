@@ -1,0 +1,28 @@
+## a100-40g-4x zone=us-west1-b machine=a2-highgpu-4g prov=STANDARD accel=none name=opd-probe-a100-40g-4x-0524-150032
+Created [https://www.googleapis.com/compute/v1/projects/soe-iris-gcp/zones/us-west1-b/instances/opd-probe-a100-40g-4x-0524-150032].
+WARNING: Some requests generated warnings:
+ - You are creating a global DNS VM. VM instances using global DNS are vulnerable to cross-regional outages. To reduce the risk of widespread service disruption, use zonal DNS instead. Learn more at https://cloud.google.com/compute/docs/networking/zonal-dns?utm_id=vm-insert
+
+NAME                               ZONE        MACHINE_TYPE   PREEMPTIBLE  INTERNAL_IP  EXTERNAL_IP      STATUS
+opd-probe-a100-40g-4x-0524-150032  us-west1-b  a2-highgpu-4g               10.138.0.10  136.109.155.237  RUNNING
+CREATE_OK
+ssh: connect to host 136.109.155.237 port 22: Connection refused
+
+Recommendation: To check for possible causes of SSH connectivity issues and get
+recommendations, rerun the ssh command with the --troubleshoot option.
+
+gcloud compute ssh opd-probe-a100-40g-4x-0524-150032 --project=soe-iris-gcp --zone=us-west1-b --troubleshoot
+
+Or, to investigate an IAP tunneling issue:
+
+gcloud compute ssh opd-probe-a100-40g-4x-0524-150032 --project=soe-iris-gcp --zone=us-west1-b --troubleshoot --tunnel-through-iap
+
+ERROR: (gcloud.compute.ssh) [/opt/homebrew/bin/ssh] exited with return code [255].
+NVIDIA A100-SXM4-40GB, 40960 MiB
+NVIDIA A100-SXM4-40GB, 40960 MiB
+NVIDIA A100-SXM4-40GB, 40960 MiB
+NVIDIA A100-SXM4-40GB, 40960 MiB
+Linux opd-probe-a100-40g-4x-0524-150032 6.8.0-1058-gcp #61~22.04.1-Ubuntu SMP Thu May  7 15:03:19 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux
+SSH_NVIDIA_SMI_OK
+Deleted [https://www.googleapis.com/compute/v1/projects/soe-iris-gcp/zones/us-west1-b/instances/opd-probe-a100-40g-4x-0524-150032].
+DELETED

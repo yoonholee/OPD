@@ -42,9 +42,7 @@ def vllm_probe(model: str) -> dict:
         enforce_eager=True,
         limit_mm_per_prompt={"image": 0, "video": 0},
     )
-    import os
-    if os.environ.get("VLLM_GDN_PREFILL_BACKEND"):
-        kwargs["gdn_prefill_backend"] = os.environ["VLLM_GDN_PREFILL_BACKEND"]
+    kwargs["gdn_prefill_backend"] = "triton"
     try:
         llm = LLM(**kwargs)
     except TypeError:

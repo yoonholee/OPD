@@ -1,0 +1,27 @@
+## g4 spot zone=us-west1-a name=opd-probe-g4spot-uswest1a-0524-150412
+Created [https://www.googleapis.com/compute/v1/projects/soe-iris-gcp/zones/us-west1-a/instances/opd-probe-g4spot-uswest1a-0524-150412].
+WARNING: Some requests generated warnings:
+ - You are creating a global DNS VM. VM instances using global DNS are vulnerable to cross-regional outages. To reduce the risk of widespread service disruption, use zonal DNS instead. Learn more at https://cloud.google.com/compute/docs/networking/zonal-dns?utm_id=vm-insert
+
+NAME                                   ZONE        MACHINE_TYPE     PREEMPTIBLE  INTERNAL_IP  EXTERNAL_IP      STATUS
+opd-probe-g4spot-uswest1a-0524-150412  us-west1-a  g4-standard-192  true         10.138.0.11  136.109.155.237  RUNNING
+CREATE_OK
+ssh: connect to host 136.109.155.237 port 22: Connection refused
+
+Recommendation: To check for possible causes of SSH connectivity issues and get
+recommendations, rerun the ssh command with the --troubleshoot option.
+
+gcloud compute ssh opd-probe-g4spot-uswest1a-0524-150412 --project=soe-iris-gcp --zone=us-west1-a --troubleshoot
+
+Or, to investigate an IAP tunneling issue:
+
+gcloud compute ssh opd-probe-g4spot-uswest1a-0524-150412 --project=soe-iris-gcp --zone=us-west1-a --troubleshoot --tunnel-through-iap
+
+ERROR: (gcloud.compute.ssh) [/opt/homebrew/bin/ssh] exited with return code [255].
+NVIDIA RTX PRO 6000 Blackwell Server Edition, 97887 MiB
+NVIDIA RTX PRO 6000 Blackwell Server Edition, 97887 MiB
+NVIDIA RTX PRO 6000 Blackwell Server Edition, 97887 MiB
+NVIDIA RTX PRO 6000 Blackwell Server Edition, 97887 MiB
+SSH_NVIDIA_SMI_OK
+Deleted [https://www.googleapis.com/compute/v1/projects/soe-iris-gcp/zones/us-west1-a/instances/opd-probe-g4spot-uswest1a-0524-150412].
+DELETED

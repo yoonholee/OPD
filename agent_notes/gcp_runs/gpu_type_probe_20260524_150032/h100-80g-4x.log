@@ -1,0 +1,31 @@
+## h100-80g-4x zone=us-west1-a machine=a3-highgpu-4g prov=SPOT accel=none name=opd-probe-h100-80g-4x-0524-150244
+WARNING: Some requests generated warnings:
+ - You are creating a global DNS VM. VM instances using global DNS are vulnerable to cross-regional outages. To reduce the risk of widespread service disruption, use zonal DNS instead. Learn more at https://cloud.google.com/compute/docs/networking/zonal-dns?utm_id=vm-insert
+
+ERROR: (gcloud.compute.instances.create) Could not fetch resource:
+---
+code: ZONE_RESOURCE_POOL_EXHAUSTED_WITH_DETAILS
+errorDetails:
+- help:
+    links:
+    - description: Troubleshooting documentation
+      url: https://cloud.google.com/compute/docs/resource-error
+- localizedMessage:
+    locale: en-US
+    message: A a3-highgpu-4g VM instance with 4 nvidia-h100-80gb accelerator(s) and
+      8 local SSD(s) is currently unavailable in the us-west1-a zone. Consider trying
+      your request in another zone which has capacity to accommodate your request.
+      Alternatively, you can try your request again with a different VM hardware configuration
+      or at a later time. For more information, see the troubleshooting documentation.
+- errorInfo:
+    domain: compute.googleapis.com
+    metadatas:
+      attachment: local-ssd:8,nvidia-h100-80gb:4
+      vmType: a3-highgpu-4g
+      zone: us-west1-a
+      zonesAvailable: ''
+    reason: stockout
+message: The zone 'projects/soe-iris-gcp/zones/us-west1-a' does not have enough resources
+  available to fulfill the request.  '(resource type:compute)'.
+
+CREATE_FAILED
