@@ -49,6 +49,7 @@ from verl.trainer.ppo.metric_utils import (
     compute_timing_metrics,
     process_validation_metrics,
 )
+from verl.trainer.ppo.pedagogical import apply_pedagogical_scaling
 from verl.trainer.ppo.reward import compute_reward, compute_reward_async
 from verl.trainer.ppo.utils import Role, WorkerType, need_critic, need_reference_policy, need_reward_model
 from verl.utils.checkpoint.checkpoint_manager import find_latest_ckpt_path, should_save_ckpt_esi
@@ -1351,6 +1352,16 @@ class RayPPOTrainer:
                                 )
                         else:
                             batch.batch["true_reward_score"] = reward_tensor
+
+                        pedagogical_config = self.config.algorithm.get("pedagogical", None)
+                        if pedagogical_config is not None and pedagogical_config.get("enabled", False):
+                            reward_tensor, pedagogical_metrics = apply_pedagogical_scaling(
+                                token_level_scores=reward_tensor,
+                                batch=batch,
+                                config=pedagogical_config,
+                            )
+                            batch.batch["token_level_scores"] = reward_tensor
+                            metrics.update(pedagogical_metrics)
 
                         if reward_extra_infos_dict:
                             batch.non_tensor_batch.update({k: np.array(v) for k, v in reward_extra_infos_dict.items()})
