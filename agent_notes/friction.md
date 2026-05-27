@@ -18,3 +18,21 @@
 - Qwen3.5 VLM text-only batch >1 failed in `extract_multi_modal_inputs -> torch.cat` because `multi_modal_inputs` shapes varied. Use `data.return_multi_modal_inputs=False`.
 - vLLM FlashInfer sampler JIT stalled under colocated 4-worker Ray on Qwen3.5. Use `VLLM_USE_FLASHINFER_SAMPLER=0`; expect separate GDN/FLA Triton warmup.
 - OPD 10-step first failed in `RewardModelWorker._compute_entropy_safe` with non-contiguous logits and `.view`. Fix: `.reshape`, covered by `test_reward_entropy_accepts_non_contiguous_logits`.
+
+- verl `update_policy` has an **asymmetric-branch bug class** in `dp_actor.py` (two instances found, may be more).
+  - **A1**: 2D-advantages (vanilla GRPO) branch at L843 dropped `entropy` via `_, log_prob, *_ = self._forward_micro_batch(...)`. Used at L907 when `entropy_coeff > 0` → UnboundLocalError. Fix: `entropy, log_prob, *_ = ...`.
+  - **A2**: 3D-advantages (top-k / OPD) branch at L837 dropped `log_prob` via `entropy, _, _, topk_log_probs = ...`. Used at L921 in `kl_penalty(logprob=log_prob, ...)` when `use_kl_loss=True` → UnboundLocalError. Fix: `entropy, log_prob, _, topk_log_probs = ...`.
+  - Why both went undetected: verl/514 changed `entropy_coeff` default 0.001 → 0.0 in v0.3.x, so neither bonus path was exercised in CI. KL-loss + OPD is rarely tested as a combo because each papers tend to use one or the other. Generalized regression test covers both branches binding entropy at position 0 AND log_prob at position 1.
+
+- Ray head init race when two SLURM jobs land on the same node (B300 b301): three layers of bug.
+  (1) `/tmp/ray/session_*` collision → `_write_cluster_info_to_kv` assert. Fix: `--temp-dir=$TMPDIR/ray-$SLURM_JOB_ID`.
+  (2) Default GCS port 6379 collision across jobs on same node. Fix: `--port=<job-derived>`.
+  (3) Chosen GCS port can land inside Ray's default worker_ports range (10002-19999). `--port=10031` triggered `ValueError: Ray component worker_ports is trying to use a port number 10031 that is used by other components.` Fix: keep custom ports below 10000 AND override `--min-worker-port`/`--max-worker-port` to a per-job slice (1000 ports starting at 20000+slot*1000). Also override `--ray-client-server-port` (default 10001 collides). Also gate `ray stop --force` behind non-SLURM (kills neighbor's Ray, exit 0:15). All four pieces wired in `BASE_ENV`; regression test covers all of them.
+  (4) `SLURM_JOB_ID % 8` is not enough: jobs 53679 and 53687 collided on the same port slice. Use `% 40` slices.
+  (5) Parallel jobs launched in the same second collided on `LOGDIR`. Include `_slurm$SLURM_JOB_ID` in default run dirs.
+
+- `ulimit -n 1048576` in sbatch script body fails with "Operation not permitted" on Schmidt; SLURM enforces hard limits. Non-fatal with `|| true`. Need to set `LimitNOFILE` in slurm.conf or via prolog if higher is required.
+
+- Four parallel B300 OPD jobs on one node can survive Ray startup but die near final validation/shutdown with `FAILED 0:15` and/or `DataLoader worker ... killed by signal: Killed`. Observed MaxRSS ~65 GB per batch process for jobs 53688-53691; only one of four completed rc0. Workaround: serialize baseline/comparison jobs or reduce validation/data-loader host-memory pressure before trusting Slurm exit state.
+
+- rsync `--exclude='checkpoint/'` (no leading slash) matches **every** `checkpoint/` directory in the tree, not just the root one. This silently nuked `verl/verl/utils/checkpoint/`, breaking `from verl.utils.checkpoint.checkpoint_manager import ...` on the Schmidt copy. Symptom: `ModuleNotFoundError: No module named 'verl.utils.checkpoint'` only on Schmidt. Same gotcha applies to `--exclude='model/'` matching `LlamaFactory/src/llamafactory/model/`, `verl/verl/trainer/config/model/`. Fix: use `--exclude='/checkpoint/'` (leading slash anchors to source root) or specifically `--exclude='./checkpoint'`. Always grep `find . -type d -name <excluded>` before running an rsync.

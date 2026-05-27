@@ -19,3 +19,7 @@
 - vLLM 0.21 Qwen3.5 colocated rollout can hang in FlashInfer sampler JIT; `VLLM_USE_FLASHINFER_SAMPLER=0` avoids that path, but GDN/FLA Triton warmup still makes step 1 slow.
 - THUNLP OPD reward entropy must use `reshape`, not `view`, because Qwen3.5/Transformers 5 can return non-contiguous logits.
 - Qwen3.5 remove-padding no longer hard-crashes with PyTorch padding-helper fallback; 3-step G4 probe passed, but throughput is not apples-to-apples yet.
+- verl 0.7.0 `dp_actor.update_policy` had a branch-asymmetric entropy capture bug: the 3D-advantages (top-k, used by OPD) branch correctly bound `entropy`, but the 2D-advantages (vanilla GRPO) branch discarded it via `_, log_prob, *_ = ...`. Enabling `actor.entropy_coeff > 0` for plain GRPO crashed at L907. Patched at `dp_actor.py:843-852`. Asymmetric bug pattern is a good thing to grep for in mixed-branch code.
+- Ray's `_write_cluster_info_to_kv()` assertion is the canonical signature of two `ray start --head` sessions sharing `/tmp/ray`. On any shared-node compute (SLURM, k8s pods on same node), always pass `--temp-dir` per job.
+- Schmidt scratch-cached `b200-b300-benchmarking` wheels (torch+vllm+ray) made `uv sync --frozen` complete in ~3 min instead of ~15 min on fresh nodes. The user-level uv cache is a real asset; don't blow it away.
+- B200/B300 partition policy is "one GPU per job"; with the right sbatch resource ask SLURM packs multiple jobs onto the same node. That's the trigger for the Ray-temp-dir bug above.
