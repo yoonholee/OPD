@@ -1,0 +1,16 @@
+# Local envs and caches
+.venv*/
+__pycache__/
+*.py[cod]
+.cache/
+
+# Training artifacts
+checkpoint/
+model/
+outputs/
+wandb/
+agent_notes/gcp_runs/
+agent_notes/latest_qwen35_2b_run_dir.txt
+
+# Generated SFT data
+LlamaFactory/data/OpenThought3-4B.jsonl
