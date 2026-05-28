@@ -27,18 +27,21 @@ Treat this as a wiring, stability, and loss-scale report.
 ## What changed in code
 
 Added:
+
 - `verl/verl/trainer/ppo/full_vocab_distill.py`
 - `verl/tests/trainer/ppo/test_full_vocab_distill.py`
 - `local/bin/run_verl_full_vocab_opd_matrix.sh`
 - `local/bin/summarize_verl_opd_runs.py`
 
 Wired:
+
 - actor computes current student full-vocab logprobs on response tokens
 - reward worker computes teacher full-vocab logprobs on the same tokens
 - trainer passes full-vocab objective metadata through the reward and actor update path
 - full-vocab mode disables top-k reward shaping and uses a direct actor divergence loss
 
 Current limitation:
+
 - full-vocab mode requires `use_remove_padding=False`
 
 ## Verification
@@ -66,6 +69,7 @@ PYTHONPATH=verl python verl/tests/trainer/ppo/test_full_vocab_distill.py
 ```
 
 GCP GPU status after the latest run:
+
 - no RUNNING GPU instances in `soe-iris-gcp`
 
 ## Experiment 001: top-k OPD surface
@@ -73,6 +77,7 @@ GCP GPU status after the latest run:
 Purpose: check the existing verl top-k OPD support and weighting paths before adding full-vocab objectives.
 
 Setup:
+
 - commit: `aec0862`
 - student: `Qwen/Qwen3-0.6B`
 - teacher: `Qwen/Qwen3-1.7B`
@@ -81,12 +86,14 @@ Setup:
 - top-k: 4
 
 Result:
+
 - 18/18 cases rc0
 - `only_stu + student_p` was the best default smoke path
 - `reward_weight_mode=none` produced unstable-scale gradients
 - `union-intersection + teacher_p` nearly canceled the signal
 
 Tracked note:
+
 - `agent_notes/experiments/001_verl_opd_topk_matrix.md`
 
 ## Experiment 002: full-vocab wiring smoke
@@ -94,6 +101,7 @@ Tracked note:
 Purpose: verify full-vocab objectives run end-to-end on Qwen3 and Qwen3.5.
 
 Setup:
+
 - code commit: `c502338`
 - hardware: GCP A100 spot, `a2-highgpu-1g`
 - train steps: 2 per method
@@ -101,6 +109,7 @@ Setup:
 - methods: GRPO, top-k OPD, reverse KL, forward KL, JSD, symmetric KL, top-k reverse KL, entropy-aware
 
 Results:
+
 - Qwen3 `0.6B -> 1.7B`: 8/8 rc0
 - Qwen3.5 `0.8B -> 2B`: 8/8 rc0
 
@@ -118,6 +127,7 @@ Qwen3.5 last-step wiring smoke:
 | full_entropy_aware | 0.160 | 148.0 | 33.8 |
 
 Tracked note:
+
 - `agent_notes/experiments/002_verl_full_vocab_opd.md`
 
 ## Experiment 003: Qwen3.5 50-step method matrix
@@ -125,6 +135,7 @@ Tracked note:
 Purpose: run each method long enough to see basic loss direction and gradient scale.
 
 Setup:
+
 - code commit: `d02c857`
 - run note commit: `f25d994`
 - VM: `opd-fullvocab-qwen35-50step-a100-c1b-0528-0941`
@@ -172,9 +183,11 @@ Last-step snapshot:
 | full_entropy_aware | 0.130 | 55.2 | 25.9 |
 
 Tracked note:
+
 - `agent_notes/experiments/003_verl_qwen35_50step_methods.md`
 
 Ignored raw logs:
+
 - `agent_notes/gcp_runs/opd-fullvocab-qwen35-50step-a100-c1b-0528-0941/gcp_runs/20260528_164534_verl_full_vocab_opd/`
 
 ## Interpretation
@@ -214,6 +227,7 @@ The current verified path is batch 1, response length 32, `use_remove_padding=Fa
 ## Decision
 
 Carry forward these methods:
+
 1. `full_jsd`
 2. `full_reverse_kl`
 3. `full_entropy_aware`
@@ -222,11 +236,39 @@ Carry forward these methods:
 Do not spend more on `full_topk_rkl` or top-k OPD until LR, clipping, or reward normalization is revisited.
 
 Next good run:
+
 - Qwen3.5 `0.8B -> 2B`
 - methods: `full_jsd`, `full_reverse_kl`, `full_entropy_aware`, `full_forward_kl`
 - 200 to 500 train steps
 - larger response length if budget allows
 - at least one LR or grad-clip variant if using anything except JSD
+
+## Experiment 004: held-out validation on the 50-step matrix
+
+Purpose: check whether the 50-step methods move a held-out math metric.
+
+Setup:
+- same methods and 50-step run as experiment 003
+- validation enabled with `VAL_BEFORE_TRAIN=True`, `TEST_FREQ=50`, `VAL_N=8`, `VAL_MAX_SAMPLES=64`
+- held-out set: `datasets/test_data/MATH-500/test.parquet`
+
+Observed held-out metrics at step 50:
+- `val-core/math_dapo/acc/mean@8`: 0.0 for every method
+- `val-core/math_dapo/acc/best@8/mean`: 0.0 for every method
+- `val-core/math_dapo/acc/maj@8/mean`: 0.0 for every method
+- `val-aux/math_dapo/reward/mean@8`: 0.0 for every method
+- `val-aux/math_dapo/score/mean@8`: 0.0 for every method
+- `val-aux/math_dapo/format_score/mean@8`: 0.0 for every method
+
+Held-out loss:
+- no dedicated PPO held-out loss metric was emitted by this validation path
+
+Interpretation:
+- no held-out math signal yet
+- train-side loss scale differences did not translate into any held-out hits on this small validation slice
+
+Tracked note:
+- `agent_notes/experiments/004_verl_qwen35_heldout_eval.md`
 
 ## Budget and state
 

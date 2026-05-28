@@ -1,11 +1,11 @@
 # Full-vocab OPD objectives
 
-Status: complete for Qwen3.5 50-step method matrix.
+Status: complete for Qwen3.5 held-out validation.
 
 Budget:
 - Hard exploration budget: $500 GCP credits for this phase.
-- Conservative counted spend after this phase: about $470.
-- No RUNNING GCP GPU instances after the 50-step run.
+- Conservative counted spend after this phase: about $520.
+- No RUNNING GCP GPU instances after held-out validation.
 
 Completed:
 1. Added verl actor losses for full-vocab reverse KL, forward KL, JSD, symmetric KL, top-k reverse KL, and entropy-aware switching.
@@ -23,12 +23,16 @@ Current caveats:
 - Results are two-step wiring/scale smokes, not quality or hparam claims.
 - Qwen3.5 grad norms are high for `sym_kl`, `forward_kl`, `topk_rkl`, and top-k OPD.
 
-Completed longer run:
-- Qwen3.5-0.8B student / Qwen3.5-2B teacher.
-- 50 train steps per method on 1xA100 spot.
+Completed longer runs:
+- Qwen3.5-0.8B student / Qwen3.5-2B teacher, 50 train steps per method on 1xA100 spot.
 - 8/8 methods rc0.
 - Experiment note: `agent_notes/experiments/003_verl_qwen35_50step_methods.md`.
 
+Held-out validation run:
+- validation enabled on the same 50-step matrix with `VAL_BEFORE_TRAIN=True`, `TEST_FREQ=50`, `VAL_N=8`, `VAL_MAX_SAMPLES=64`.
+- held-out math accuracy and pass@k-style metrics were 0.0 across methods.
+- experiment note: `agent_notes/experiments/004_verl_qwen35_heldout_eval.md`.
+
 Next:
-- Prioritize `full_jsd`, `full_reverse_kl`, `full_entropy_aware`, and `full_forward_kl` for longer runs.
-- Do not spend more on `full_topk_rkl` or top-k OPD until LR/clipping or reward normalization is revisited.
+- Do not read the current 50-step ranking as quality.
+- Need either a stronger eval slice, longer training, or a different path that emits a true held-out loss.
