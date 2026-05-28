@@ -41,7 +41,7 @@ from torch.distributed.fsdp import FullyShardedDataParallel as FSDP
 from torch.utils.data import Dataset, DistributedSampler
 from torchdata.stateful_dataloader import StatefulDataLoader
 from tqdm import tqdm
-from transformers import AutoConfig, AutoModelForCausalLM, PreTrainedModel
+from transformers import AutoConfig, AutoModel, AutoModelForCausalLM, PreTrainedModel
 
 import verl.utils.hdfs_io as hdfs_io
 from verl.utils.attention_utils import index_first_axis, pad_input, rearrange, unpad_input
@@ -68,6 +68,12 @@ from verl.utils.py_functional import convert_to_regular_types
 from verl.utils.torch_dtypes import PrecisionType
 from verl.utils.torch_functional import get_cosine_schedule_with_warmup, get_wsd_schedule_with_warmup
 from verl.utils.tracking import Tracking
+from verl.utils.transformers_compat import (
+    AutoModelForImageTextToText,
+    AutoModelForVision2Seq,
+    conditional_generation_auto_class,
+    mapping_keys,
+)
 from verl.utils.ulysses import (
     gather_outputs_and_unpad,
     get_ulysses_sequence_parallel_world_size,
@@ -214,8 +220,11 @@ class FSDPSFTTrainer:
         trust_remote_code = self.config.model.trust_remote_code
         torch_dtype = self.config.model.fsdp_config.get("model_dtype", "fp32")
         torch_dtype = PrecisionType.to_dtype(torch_dtype)
+        attn_implementation = self.config.model.get("attn_implementation", "flash_attention_2")
         # load config first
-        config = AutoConfig.from_pretrained(local_model_path, trust_remote_code=trust_remote_code)
+        config = AutoConfig.from_pretrained(
+            local_model_path, trust_remote_code=trust_remote_code, attn_implementation=attn_implementation
+        )
         self.model_config = config
         if hasattr(self.model_config, "max_position_embeddings"):
             self.model_config.max_position_embeddings = max(
@@ -230,11 +239,22 @@ class FSDPSFTTrainer:
         )
 
         with init_context():
-            self.model: PreTrainedModel = AutoModelForCausalLM.from_pretrained(
+            if type(config) in mapping_keys(AutoModelForVision2Seq):
+                model_cls = AutoModelForVision2Seq
+            elif type(config) in mapping_keys(AutoModelForCausalLM):
+                model_cls = AutoModelForCausalLM
+            elif type(config) in mapping_keys(AutoModelForImageTextToText):
+                model_cls = AutoModelForImageTextToText
+            elif any("ForConditionalGeneration" in arch for arch in getattr(config, "architectures", [])):
+                model_cls = conditional_generation_auto_class()
+            else:
+                model_cls = AutoModel
+
+            self.model: PreTrainedModel = model_cls.from_pretrained(
                 local_model_path,
                 config=config,
                 torch_dtype=torch_dtype,
-                attn_implementation="flash_attention_2",
+                attn_implementation=attn_implementation,
                 trust_remote_code=trust_remote_code,
             )
 
@@ -387,8 +407,8 @@ class FSDPSFTTrainer:
                 shift_logits = logits[..., :-1, :].contiguous()
                 shift_labels = labels.contiguous()
                 # Flatten the tokens
-                shift_logits = shift_logits.view(-1, self.model.config.vocab_size)
-                shift_labels = shift_labels.view(-1)
+                shift_logits = shift_logits.reshape(-1, shift_logits.size(-1))
+                shift_labels = shift_labels.reshape(-1)
                 # Enable model parallelism
                 shift_labels = shift_labels.to(shift_logits.device)
                 loss = loss_fct(shift_logits, shift_labels)
