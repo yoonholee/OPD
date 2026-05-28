@@ -1,127 +1,234 @@
-# Qwen3.5-2B OPD experiment status
+# OPD full-vocab experiment report
 
-Date: 2026-05-25
+Date: 2026-05-28
 Branch: `qwen35-2b-opd-smoke`
-Latest pushed commit: `811bf42 feat: pin qwen35 opd smoke env`
+Core code commit: `d02c857`
+Latest run note commit before this report: `f25d994`
 
 ## Summary
 
-The THUNLP/OPD codebase now has a reproducible Qwen3.5-2B smoke stack.
-The main successful setup is GCP G4, 4x RTX PRO 6000 Blackwell, stable Python package pins, and text-only Qwen3.5 handling.
+We now have full-vocab distillation objectives wired into the local verl stack and verified on GCP A100.
+The implemented objectives are reverse KL, forward KL, Jensen-Shannon divergence, symmetric KL, teacher-top-k reverse KL, and an entropy-aware reverse/forward KL switch.
+The old top-k OPD reward path is still intact.
 
-This proves the infrastructure path for GRPO and OPD on one 4-GPU node.
-It does not prove learning quality yet, because the GRPO reward smoke produced all-zero rewards and OPD used a same-weight teacher.
+The latest useful run is a 50-step Qwen3.5 method matrix.
+It used `Qwen/Qwen3.5-0.8B` as student and `Qwen/Qwen3.5-2B` as teacher on one A100 spot VM.
+All eight methods completed rc0.
 
-## Current working recipe
+The strongest practical result is simple: `full_jsd` is the cleanest next default.
+It decreased over 50 updates, had the smallest loss scale, and had the lowest max gradient norm among full-vocab objectives.
+`full_reverse_kl`, `full_forward_kl`, and `full_entropy_aware` also decreased and are worth carrying forward.
+Existing top-k OPD and `full_topk_rkl` moved in the wrong direction on this short run and had large gradient spikes.
 
-Environment:
+This is still not a quality result.
+Response length is only 32, validation is intentionally meaningless, and the data slice is smoke-scale.
+Treat this as a wiring, stability, and loss-scale report.
 
-- `local/qwen35_2b_smoke/pyproject.toml`
-- `local/qwen35_2b_smoke/uv.lock`
-- `transformers==5.9.0`
-- `vllm==0.21.0`
-- Torch `2.11.0+cu130`
-- NumPy `2.3.5`
-- Ray `2.55.1`
+## What changed in code
 
-Runtime knobs:
+Added:
+- `verl/verl/trainer/ppo/full_vocab_distill.py`
+- `verl/tests/trainer/ppo/test_full_vocab_distill.py`
+- `local/bin/run_verl_full_vocab_opd_matrix.sh`
+- `local/bin/summarize_verl_opd_runs.py`
 
-- `data.return_multi_modal_inputs=False`
-- `VLLM_USE_FLASHINFER_SAMPLER=0`
-- `gdn_prefill_backend=triton`
-- route-detected `NCCL_SOCKET_IFNAME`
-- `use_remove_padding=False` by default, despite a small passing probe
+Wired:
+- actor computes current student full-vocab logprobs on response tokens
+- reward worker computes teacher full-vocab logprobs on the same tokens
+- trainer passes full-vocab objective metadata through the reward and actor update path
+- full-vocab mode disables top-k reward shaping and uses a direct actor divergence loss
 
-## Main 10-step results
+Current limitation:
+- full-vocab mode requires `use_remove_padding=False`
 
-Hardware: GCP `g4-standard-192`, 4 GPUs, Spot, `us-west1-a`.
-Dataset: local DAPO-Math smoke, `SMOKE_N=96`.
-Batch: 8.
-Response length: 64.
-Metrics below exclude step 1 warmup.
+## Verification
 
-| Run | Status | Step time | Throughput | Max GPU alloc | Signal |
-| --- | --- | ---: | ---: | ---: | --- |
-| GRPO | pass | 2.26s | 148.7 tok/s | 58.9 GB | rewards zero, no learning signal |
-| OPD same-weight teacher | pass | 2.51s | 138.8 tok/s | 58.9 GB | nonzero reward/grad from train-teacher drift |
-| GRPO remove-padding probe | pass, 3 steps | 2.00s | 63.4 tok/s | 49.4 GB | batch 4, not apples-to-apples |
+Local static checks:
 
-Evidence:
+```bash
+python3 -m py_compile \
+  local/bin/summarize_verl_opd_runs.py \
+  verl/verl/trainer/ppo/full_vocab_distill.py \
+  verl/verl/workers/actor/dp_actor.py \
+  verl/verl/workers/fsdp_workers.py \
+  verl/verl/trainer/ppo/ray_trainer.py \
+  verl/verl/workers/config/rollout.py \
+  verl/tests/trainer/ppo/test_full_vocab_distill.py
 
-- GRPO: `agent_notes/gcp_runs/opd-g4-qwen35-scale5-0524-1557/gcp_runs/20260524_225852_g4_grpo10_b8_r64_textonly_no_flashinfer_sampler/grpo_qwen35_2b.log`
-- OPD: `agent_notes/gcp_runs/opd-g4-qwen35-opdfix-0524-1609/gcp_runs/20260524_231105_g4_opd10_b8_r64_reshape_textonly_no_flashinfer_sampler/opd_qwen35_2b.log`
-- remove-padding: `agent_notes/gcp_runs/opd-g4-qwen35-scale5-0524-1557/gcp_runs/20260524_230425_g4_rmpad_probe_textonly_no_flashinfer_sampler/grpo_qwen35_2b.log`
+shellcheck local/bin/run_qwen35_2b_smoke.sh local/bin/run_verl_full_vocab_opd_matrix.sh
+```
 
-## What changed
+GCP unit check before method matrices:
 
-Code and config:
+```bash
+source .venv-qwen35-2b/bin/activate
+PYTHONPATH=verl python verl/tests/trainer/ppo/test_full_vocab_distill.py
+```
 
-- Added locked smoke project under `local/qwen35_2b_smoke/`.
-- Updated `local/bin/setup_qwen35_2b_env.sh` to use `uv sync --frozen`.
-- Added tunable batch/length/vLLM knobs to `local/bin/run_qwen35_2b_smoke.sh`.
-- Generalized `local/bin/gcp_qwen35_2b_l4_smoke.sh` for G4/A2/A3 shapes, Spot, boot disk type, and custom commands.
-- Fixed OPD reward entropy by replacing `.view` with `.reshape` for non-contiguous logits.
-- Added fallback padding helpers when `flash_attn.bert_padding` is unavailable.
+GCP GPU status after the latest run:
+- no RUNNING GPU instances in `soe-iris-gcp`
 
-Tests added:
+## Experiment 001: top-k OPD surface
 
-- exact train/rollout logprob match gives identity importance weights
-- token and sequence importance sampling ratios
-- policy loss applies rollout IS weights
-- OPD reward entropy accepts non-contiguous logits
+Purpose: check the existing verl top-k OPD support and weighting paths before adding full-vocab objectives.
 
-## Root causes
+Setup:
+- commit: `aec0862`
+- student: `Qwen/Qwen3-0.6B`
+- teacher: `Qwen/Qwen3-1.7B`
+- hardware: GCP A100 spot, `a2-highgpu-1g`
+- train steps: 2
+- top-k: 4
 
-- Qwen3.5-2B is VLM-style, not plain text CausalLM. Text-only batches still carried variable `multi_modal_inputs`, which broke batch collation. Fix: `data.return_multi_modal_inputs=False`.
-- Stable packages are now sufficient. Nightly Transformers/vLLM is no longer needed for this smoke.
-- OPD reward entropy failed because Qwen3.5 logits were non-contiguous and THUNLP used `.view`. Fix: `.reshape`.
-- G4 uses `ens3`, G2/L4 used `ens7`, A2/A100 used `ens8`. Hardcoded NICs are brittle.
-- G4 requires `hyperdisk-balanced`, not `pd-balanced`.
-- vLLM FlashInfer sampler JIT can stall with colocated Ray workers. Disable it for now.
-- Qwen3.5 GDN/FLA Triton warmup makes step 1 slow, around 25 to 26 seconds.
+Result:
+- 18/18 cases rc0
+- `only_stu + student_p` was the best default smoke path
+- `reward_weight_mode=none` produced unstable-scale gradients
+- `union-intersection + teacher_p` nearly canceled the signal
 
-## GPU status
+Tracked note:
+- `agent_notes/experiments/001_verl_opd_topk_matrix.md`
 
-- G4 Spot: works and is the current best path.
-- A100 Standard: created, reached `nvidia-smi`, then stalled in vLLM/FlashInfer init during the source run. Stopped to save cost.
-- H100 Spot: stocked out in the probed zone.
-- All GCP VMs were deleted. Final instance list was empty.
+## Experiment 002: full-vocab wiring smoke
+
+Purpose: verify full-vocab objectives run end-to-end on Qwen3 and Qwen3.5.
+
+Setup:
+- code commit: `c502338`
+- hardware: GCP A100 spot, `a2-highgpu-1g`
+- train steps: 2 per method
+- response length: 32
+- methods: GRPO, top-k OPD, reverse KL, forward KL, JSD, symmetric KL, top-k reverse KL, entropy-aware
+
+Results:
+- Qwen3 `0.6B -> 1.7B`: 8/8 rc0
+- Qwen3.5 `0.8B -> 2B`: 8/8 rc0
+
+Qwen3.5 last-step wiring smoke:
+
+| case | loss | grad norm | tok/s |
+|---|---:|---:|---:|
+| grpo | 0.000 | 0.0 | 42.6 |
+| topk_opd | -0.053 | 596.0 | 35.8 |
+| full_reverse_kl | 0.200 | 157.0 | 33.2 |
+| full_forward_kl | 0.163 | 320.0 | 33.0 |
+| full_jsd | 0.033 | 27.6 | 33.1 |
+| full_sym_kl | 0.179 | 764.0 | 33.8 |
+| full_topk_rkl | 0.200 | 280.0 | 33.3 |
+| full_entropy_aware | 0.160 | 148.0 | 33.8 |
+
+Tracked note:
+- `agent_notes/experiments/002_verl_full_vocab_opd.md`
+
+## Experiment 003: Qwen3.5 50-step method matrix
+
+Purpose: run each method long enough to see basic loss direction and gradient scale.
+
+Setup:
+- code commit: `d02c857`
+- run note commit: `f25d994`
+- VM: `opd-fullvocab-qwen35-50step-a100-c1b-0528-0941`
+- student: `Qwen/Qwen3.5-0.8B`
+- teacher: `Qwen/Qwen3.5-2B`
+- hardware: GCP A100 spot, `a2-highgpu-1g`, `us-central1-b`
+- train steps: 50 per method
+- smoke rows: 64
+- response length: 32
+- actor LR: `1e-6`
+- grad clipping: verl default
+
+Repro shape:
+
+```bash
+MODEL=Qwen/Qwen3.5-0.8B TEACHER_MODEL=Qwen/Qwen3.5-2B \
+NGPUS=1 TRAIN_STEPS=50 SMOKE_N=64 LOG_PROB_TOP_K=0 TIMEOUT=35m \
+bash local/bin/run_verl_full_vocab_opd_matrix.sh
+```
+
+Result: 8/8 methods rc0.
+
+| case | steps | loss step 1 | loss step 50 | delta | max grad norm | mean tok/s |
+|---|---:|---:|---:|---:|---:|---:|
+| grpo | 50 | 0.000 | 0.000 | 0.000 | 0 | 40.2 |
+| topk_opd | 50 | 0.045 | 0.121 | +0.076 | 14784 | 34.8 |
+| full_reverse_kl | 50 | 0.172 | 0.125 | -0.046 | 1744 | 32.3 |
+| full_forward_kl | 50 | 0.153 | 0.121 | -0.032 | 3088 | 31.7 |
+| full_jsd | 50 | 0.032 | 0.024 | -0.009 | 500 | 32.1 |
+| full_sym_kl | 50 | 0.162 | 0.119 | -0.043 | 7840 | 32.0 |
+| full_topk_rkl | 50 | 0.159 | 0.195 | +0.036 | 5184 | 32.2 |
+| full_entropy_aware | 50 | 0.176 | 0.130 | -0.047 | 2832 | 32.0 |
+
+Last-step snapshot:
+
+| case | loss | grad norm | tok/s |
+|---|---:|---:|---:|
+| grpo | 0.000 | 0.0 | 32.6 |
+| topk_opd | 0.121 | 596.0 | 28.4 |
+| full_reverse_kl | 0.125 | 94.5 | 25.7 |
+| full_forward_kl | 0.121 | 53.0 | 25.3 |
+| full_jsd | 0.024 | 49.0 | 25.9 |
+| full_sym_kl | 0.119 | 46.5 | 26.5 |
+| full_topk_rkl | 0.195 | 1600.0 | 26.1 |
+| full_entropy_aware | 0.130 | 55.2 | 25.9 |
+
+Tracked note:
+- `agent_notes/experiments/003_verl_qwen35_50step_methods.md`
+
+Ignored raw logs:
+- `agent_notes/gcp_runs/opd-fullvocab-qwen35-50step-a100-c1b-0528-0941/gcp_runs/20260528_164534_verl_full_vocab_opd/`
 
 ## Interpretation
 
-GRPO:
+Full-vocab JSD is the safest method to try next.
+It has the smallest loss, the cleanest gradient scale, and no obvious throughput penalty relative to the other full-vocab losses.
 
-- Infrastructure path works.
-- The reward function/data smoke is too weak. All rewards were zero, so `pg_loss` and grad norm were zero.
-- Next GRPO experiment needs a task/reward with nonzero variance.
+Reverse KL and entropy-aware are also reasonable.
+Both decreased over 50 steps and ended with manageable last-step grad norms.
 
-OPD:
+Forward KL decreased too, but it had larger early gradient spikes than JSD.
+It remains useful as a comparison method, not the first default.
 
-- The end-to-end OPD path works after the reshape fix.
-- Same-weight teacher/student still yields nonzero probability deltas because train and inference paths are not exactly identical.
-- Treat same-weight OPD as a systems calibration test, not a quality result.
+Symmetric KL decreased, but its max grad norm was large.
+It should not be a default until LR or clipping checks are done.
 
-Probability drift:
+Existing top-k OPD and full top-k reverse KL are not good next spends.
+Both moved in the wrong loss direction on the 50-step run and had the largest gradient spikes.
 
-- GRPO train-vs-rollout max prob diff mean: 0.059.
-- OPD train-vs-rollout max prob diff mean: 0.058.
-- OPD top-k overlap mean: 0.989.
-- Same-weight OPD produced nonzero gradients, so real OPD needs drift calibration or a deadband.
+GRPO is included only as an infrastructure baseline here.
+Its reward signal is zero in this smoke, so its loss and grad norm are zero.
 
-## Recommended next experiment
+## Main caveats
 
-1. Keep this G4 locked setup as the baseline.
-2. Run a real-reward GRPO task where reward variance is nonzero.
-3. Run OPD with a stronger teacher or later-checkpoint teacher.
-4. Add same-weight teacher calibration before using raw probability deltas as reward.
-5. Only then test async or self-improving teacher loops.
-6. Re-run remove-padding apples-to-apples at batch 8 before flipping the default.
+This report does not claim model quality.
+The run is too short, response length is too small, and validation is not meaningful.
 
-## Verification run locally
+Loss scales are objective-specific.
+A lower absolute loss is not automatically a better model.
 
-- `bash -n local/bin/setup_qwen35_2b_env.sh local/bin/run_qwen35_2b_smoke.sh local/bin/gcp_qwen35_2b_l4_smoke.sh`
-- `uv lock --project local/qwen35_2b_smoke --check`
-- `pytest -q verl/tests/trainer/ppo/test_rollout_corr_matching.py`
-- `pytest -q verl/tests/workers/test_fsdp_workers.py::test_reward_entropy_accepts_non_contiguous_logits`
-- `ruff check --select E9,F63,F7,F82 ...`
-- `gcloud compute instances list`, no rows
+Gradient norms are pre-clip total norms from `clip_grad_norm_`.
+The optimizer steps are clipped, but large pre-clip values still tell us about loss scale.
+
+Full-vocab runs are memory-sensitive.
+The current verified path is batch 1, response length 32, `use_remove_padding=False`.
+
+## Decision
+
+Carry forward these methods:
+1. `full_jsd`
+2. `full_reverse_kl`
+3. `full_entropy_aware`
+4. `full_forward_kl`
+
+Do not spend more on `full_topk_rkl` or top-k OPD until LR, clipping, or reward normalization is revisited.
+
+Next good run:
+- Qwen3.5 `0.8B -> 2B`
+- methods: `full_jsd`, `full_reverse_kl`, `full_entropy_aware`, `full_forward_kl`
+- 200 to 500 train steps
+- larger response length if budget allows
+- at least one LR or grad-clip variant if using anything except JSD
+
+## Budget and state
+
+Conservative counted GCP spend after this phase: about $470 of the $500 phase cap.
+No GCP GPU instances are running after the latest run.
