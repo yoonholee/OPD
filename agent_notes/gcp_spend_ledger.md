@@ -13,7 +13,7 @@ Rules:
 - Stop new launches at $400 estimated cumulative spend until reviewed.
 - Delete or auto-delete VMs after log sync.
 
-Current conservative reserved estimate from created SFT + OPD variant VMs: $420.
+Current conservative reserved estimate from created SFT + OPD variant VMs: $470.
 
 Runs counted:
 - `distill-sft-l4-0527-1825`: reserve $50, failed before model load, VM auto-deleted, logs synced.
@@ -29,9 +29,10 @@ Runs counted:
 - `opd-variants-teacher17-a100-c1b-0527-2300`: reserve $25, Qwen3-0.6B student / Qwen3-1.7B teacher top-k OPD matrix, 18/18 rc0, VM auto-deleted, logs synced.
 - `opd-fullvocab-qwen3-a100-c1b-0528-0836`: reserve $25, Qwen3-0.6B student / Qwen3-1.7B teacher full-vocab OPD matrix, 8/8 rc0, VM auto-deleted, logs synced.
 - `opd-fullvocab-qwen35-a100-c1b-0528-0858`: reserve $25, Qwen3.5-0.8B student / Qwen3.5-2B teacher full-vocab OPD matrix, 8/8 rc0, VM auto-deleted, logs synced.
+- `opd-fullvocab-qwen35-50step-a100-c1b-0528-0941`: reserve $50, Qwen3.5-0.8B student / Qwen3.5-2B teacher 50-step OPD method matrix, 8/8 rc0, VM auto-deleted, logs synced.
 
 Runs not counted as compute spend:
 - L4/G4/H100 stockout attempts that failed before VM creation.
 
 Known live state on 2026-05-28:
-- No RUNNING GCP GPU instances in `soe-iris-gcp` after full-vocab matrices.
+- No RUNNING GCP GPU instances in `soe-iris-gcp` after the 50-step method matrix.

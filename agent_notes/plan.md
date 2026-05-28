@@ -1,11 +1,11 @@
 # Full-vocab OPD objectives
 
-Status: complete for tiny Qwen3 and Qwen3.5 GCP smokes.
+Status: complete for Qwen3.5 50-step method matrix.
 
 Budget:
 - Hard exploration budget: $500 GCP credits for this phase.
-- Conservative counted spend after this phase: about $420.
-- No RUNNING GCP GPU instances after the runs.
+- Conservative counted spend after this phase: about $470.
+- No RUNNING GCP GPU instances after the 50-step run.
 
 Completed:
 1. Added verl actor losses for full-vocab reverse KL, forward KL, JSD, symmetric KL, top-k reverse KL, and entropy-aware switching.
@@ -23,6 +23,12 @@ Current caveats:
 - Results are two-step wiring/scale smokes, not quality or hparam claims.
 - Qwen3.5 grad norms are high for `sym_kl`, `forward_kl`, `topk_rkl`, and top-k OPD.
 
-Next sensible run:
-- Longer A100 run on Qwen3.5 for `topk_opd`, `reverse_kl`, `forward_kl`, `jsd`, and `entropy_aware`.
-- Sweep LR or grad clipping before trusting Qwen3.5 full-vocab loss comparisons.
+Completed longer run:
+- Qwen3.5-0.8B student / Qwen3.5-2B teacher.
+- 50 train steps per method on 1xA100 spot.
+- 8/8 methods rc0.
+- Experiment note: `agent_notes/experiments/003_verl_qwen35_50step_methods.md`.
+
+Next:
+- Prioritize `full_jsd`, `full_reverse_kl`, `full_entropy_aware`, and `full_forward_kl` for longer runs.
+- Do not spend more on `full_topk_rkl` or top-k OPD until LR/clipping or reward normalization is revisited.
