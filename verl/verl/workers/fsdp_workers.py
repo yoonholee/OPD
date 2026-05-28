@@ -977,7 +977,11 @@ class ActorRolloutRefWorker(Worker, DistProfilerExtension):
         data.meta_info["max_token_len"] = self.config.rollout.log_prob_max_token_len_per_gpu
         data.meta_info["use_dynamic_bsz"] = self.config.rollout.log_prob_use_dynamic_bsz
         data.meta_info["temperature"] = self.config.rollout.temperature
-        data.meta_info["top_k"] = self.config.rollout.get("log_prob_top_k", 0)
+        data.meta_info["top_k"] = (
+            0
+            if self.config.rollout.get("full_vocab_objective", None)
+            else self.config.rollout.get("log_prob_top_k", 0)
+        )
         # data.meta_info["top_p"] = 1.0
         # print("log_prob_top_k", data.meta_info["top_k"])
         # perform recompute log_prob
@@ -2296,6 +2300,35 @@ class RewardModelWorker(Worker, DistProfilerExtension):
 
             return rm_log_probs, teacher_on_student_log_probs, teacher_top_k_ids, teacher_top_k_log_probs, teacher_entropy, teacher_valid_counts, teacher_overlap_mask, teacher_in_student_mask
 
+    def _forward_full_vocab_micro_batch(self, micro_batch, teacher_temperature=1.0):
+        """Return teacher sampled-token logprobs and full-vocab logprobs for response positions."""
+        if self.use_remove_padding:
+            raise NotImplementedError("full-vocab distillation currently requires use_remove_padding=False")
+
+        response_length = micro_batch["responses"].size(-1)
+        with torch.no_grad(), torch.autocast(device_type=get_device_name(), dtype=torch.bfloat16):
+            input_ids = micro_batch["input_ids"]
+            attention_mask = micro_batch["attention_mask"]
+            position_ids = micro_batch["position_ids"]
+            if position_ids.dim() == 3:  # qwen2vl mrope
+                position_ids = position_ids.transpose(0, 1)
+
+            output = self.reward_module(
+                input_ids=input_ids,
+                attention_mask=attention_mask,
+                position_ids=position_ids,
+                use_cache=False,
+                return_dict=self.use_fused_kernels,
+            )
+            logits = output[0] if isinstance(output, tuple) else output.logits
+            logits = logits[:, -response_length - 1 : -1, :].div(teacher_temperature)
+            teacher_full_log_probs = torch.log_softmax(logits, dim=-1)
+            teacher_log_probs = teacher_full_log_probs.gather(
+                dim=-1, index=micro_batch["responses"].unsqueeze(-1)
+            ).squeeze(-1)
+
+            return teacher_log_probs, teacher_full_log_probs
+
     def _expand_to_token_level(self, data: DataProto, scores: torch.Tensor):
         batch_size = data.batch.batch_size[0]
         # expand as token_level_reward
@@ -2618,8 +2651,10 @@ class RewardModelWorker(Worker, DistProfilerExtension):
             top_k = data.meta_info.get("log_prob_top_k", self.config.get("log_prob_top_k", 0))
             top_k_strategy = data.meta_info.get("top_k_strategy", self.config.get("top_k_strategy", "only_stu"))
             teacher_temperature = data.meta_info.get("teacher_temperature", self.config.get("teacher_temperature", 1.0))
+            full_vocab_objective = data.meta_info.get("full_vocab_objective", self.config.get("full_vocab_objective", None))
             
             output_logp = []
+            output_full_logp = []
             output_on_student_logp = []
             output_teacher_top_k_ids = []
             output_teacher_top_k_logp = []
@@ -2643,14 +2678,27 @@ class RewardModelWorker(Worker, DistProfilerExtension):
                     # Fallback for other types (e.g. dict) if split behaves differently
                     mb_top_k_ids = micro_batch.get("student_top_k_ids", None) if hasattr(micro_batch, "get") else None
 
-                teacher_logp_batch, teacher_on_student_logp_batch, teacher_top_k_ids_batch, teacher_top_k_logp_teacher_batch, teacher_entropy_batch, teacher_valid_counts_batch, teacher_overlap_mask_batch, teacher_in_student_mask_batch = self._forward_micro_batch(
-                    micro_batch, 
-                    student_top_k_ids=mb_top_k_ids,
-                    compute_entropy=compute_entropy,
-                    top_k=top_k,
-                    strategy=top_k_strategy,
-                    teacher_temperature=teacher_temperature
-                )
+                if full_vocab_objective:
+                    teacher_logp_batch, teacher_full_logp_batch = self._forward_full_vocab_micro_batch(
+                        micro_batch, teacher_temperature=teacher_temperature
+                    )
+                    teacher_on_student_logp_batch = None
+                    teacher_top_k_ids_batch = None
+                    teacher_top_k_logp_teacher_batch = None
+                    teacher_entropy_batch = None
+                    teacher_valid_counts_batch = None
+                    teacher_overlap_mask_batch = None
+                    teacher_in_student_mask_batch = None
+                    output_full_logp.append(teacher_full_logp_batch)
+                else:
+                    teacher_logp_batch, teacher_on_student_logp_batch, teacher_top_k_ids_batch, teacher_top_k_logp_teacher_batch, teacher_entropy_batch, teacher_valid_counts_batch, teacher_overlap_mask_batch, teacher_in_student_mask_batch = self._forward_micro_batch(
+                        micro_batch, 
+                        student_top_k_ids=mb_top_k_ids,
+                        compute_entropy=compute_entropy,
+                        top_k=top_k,
+                        strategy=top_k_strategy,
+                        teacher_temperature=teacher_temperature
+                    )
                 output_logp.append(teacher_logp_batch)
                 if teacher_on_student_logp_batch is not None:
                     output_on_student_logp.append(teacher_on_student_logp_batch)
@@ -2668,6 +2716,9 @@ class RewardModelWorker(Worker, DistProfilerExtension):
                     output_teacher_in_student.append(teacher_in_student_mask_batch)
                     
             teacher_logp = torch.cat(output_logp, dim=0)
+            teacher_full_logp = None
+            if len(output_full_logp) > 0:
+                teacher_full_logp = torch.cat(output_full_logp, dim=0)
             teacher_on_student_logp = None
             if len(output_on_student_logp) > 0:
                 teacher_on_student_logp = torch.cat(output_on_student_logp, dim=0)
@@ -2701,6 +2752,8 @@ class RewardModelWorker(Worker, DistProfilerExtension):
                 assert len(indices) == teacher_logp.size(0), f"{len(indices)} vs. {teacher_logp.size(0)}"
                 revert_indices = torch.tensor(get_reverse_idx(indices), dtype=torch.long, device=teacher_logp.device)
                 teacher_logp = teacher_logp[revert_indices]
+                if teacher_full_logp is not None:
+                    teacher_full_logp = teacher_full_logp[revert_indices]
                 if teacher_on_student_logp is not None:
                     teacher_on_student_logp = teacher_on_student_logp[revert_indices]
                 if teacher_top_k_ids is not None:
@@ -2716,7 +2769,11 @@ class RewardModelWorker(Worker, DistProfilerExtension):
                 if teacher_in_student_mask is not None:
                     teacher_in_student_mask = teacher_in_student_mask[revert_indices]
 
-            if top_k > 0:
+            if full_vocab_objective:
+                rm_scores = torch.zeros_like(response_mask, dtype=teacher_logp.dtype, device=teacher_logp.device)
+                overlap_mask = None
+                teacher_valid_counts = None
+            elif top_k > 0:
                 # Reward calculation is moved to ray_trainer for top_k > 0
                 # because it needs student_on_teacher_log_probs which requires another actor forward
                 rm_scores = None 
@@ -2733,6 +2790,8 @@ class RewardModelWorker(Worker, DistProfilerExtension):
             tensors = {}
             if rm_scores is not None:
                 tensors["rm_scores"] = rm_scores
+            if teacher_full_logp is not None:
+                tensors["teacher_full_log_probs"] = teacher_full_logp
             
             if teacher_on_student_logp is not None:
                 tensors["teacher_on_student_log_probs"] = teacher_on_student_logp

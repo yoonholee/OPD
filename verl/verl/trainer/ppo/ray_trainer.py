@@ -1120,6 +1120,9 @@ class RayPPOTrainer:
                             strategy = self.config.actor_rollout_ref.rollout.get("top_k_strategy", "only_stu")
                             kl_estimator = self.config.actor_rollout_ref.rollout.get("kl_estimator", "k1")
                             reward_weight_mode = self.config.actor_rollout_ref.rollout.get("reward_weight_mode", "student_p")
+                            full_vocab_objective = self.config.actor_rollout_ref.rollout.get("full_vocab_objective", None)
+                            if full_vocab_objective:
+                                top_k = 0
 
                             # pass global_steps and is_plot config to rm_wg
                             batch.meta_info["global_steps"] = self.global_steps
@@ -1131,12 +1134,15 @@ class RayPPOTrainer:
                             batch.meta_info["kl_estimator"] = kl_estimator
                             batch.meta_info["reward_weight_mode"] = reward_weight_mode
                             batch.meta_info["teacher_temperature"] = teacher_temperature
+                            batch.meta_info["full_vocab_objective"] = full_vocab_objective
+                            batch.meta_info["full_vocab_topk"] = self.config.actor_rollout_ref.rollout.get("full_vocab_topk", 20)
+                            batch.meta_info["full_vocab_entropy_quantile"] = self.config.actor_rollout_ref.rollout.get("full_vocab_entropy_quantile", 0.5)
                             
                             with marked_timer("compute_rm_score", timing_raw, color="magenta"):
                                 teacher_data = self.rm_wg.compute_rm_score(batch)
                                 batch = batch.union(teacher_data)
 
-                            if top_k > 0:
+                            if top_k > 0 and not full_vocab_objective:
                                 # All distillation reward calculation is now moved to GPU worker (actor_rollout_wg)
                                 # for efficiency and to reduce CPU tensor ops.
                                 # compute_distillation_reward computes S_on_T and then rm_scores.

@@ -32,6 +32,9 @@ USE_ACTIVATION_OFFLOAD=${USE_ACTIVATION_OFFLOAD:-False}
 USE_TORCH_COMPILE=${USE_TORCH_COMPILE:-False}
 ATTN_IMPLEMENTATION=${ATTN_IMPLEMENTATION:-sdpa}
 LOG_PROB_TOP_K=${LOG_PROB_TOP_K:-4}
+FULL_VOCAB_OBJECTIVE=${FULL_VOCAB_OBJECTIVE:-}
+FULL_VOCAB_TOPK=${FULL_VOCAB_TOPK:-20}
+FULL_VOCAB_ENTROPY_QUANTILE=${FULL_VOCAB_ENTROPY_QUANTILE:-0.5}
 ROLLOUT_GPU_MEMORY_UTILIZATION=${ROLLOUT_GPU_MEMORY_UTILIZATION:-$VLLM_GPU_MEMORY_UTILIZATION}
 MAX_TOKENS_VAL=${MAX_TOKENS_VAL:-$MAX_RESPONSE_LENGTH}
 REWARD_MODEL_MICRO_BATCH_SIZE_PER_GPU=${REWARD_MODEL_MICRO_BATCH_SIZE_PER_GPU:-1}
@@ -53,6 +56,10 @@ VAL_FILES=${VAL_FILES:-"[datasets/test_data/MATH-500/test.parquet]"}
 VAL_N=${VAL_N:-8}
 VAL_BEFORE_TRAIN=${VAL_BEFORE_TRAIN:-True}
 TEST_FREQ=${TEST_FREQ:-$TRAIN_STEPS}
+GRPO_EXPERIMENT_NAME=${GRPO_EXPERIMENT_NAME:-${EXPERIMENT_NAME:-grpo_qwen35_2b}}
+OPD_EXPERIMENT_NAME=${OPD_EXPERIMENT_NAME:-${EXPERIMENT_NAME:-opd_qwen35_2b}}
+GRPO_CHECKPOINT_DIR=${GRPO_CHECKPOINT_DIR:-${EXPERIMENT_NAME:-qwen35_2b_grpo}}
+OPD_CHECKPOINT_DIR=${OPD_CHECKPOINT_DIR:-${EXPERIMENT_NAME:-qwen35_2b_opd}}
 EXIT_CODE=0
 
 mkdir -p "$LOGDIR"
@@ -223,6 +230,13 @@ PEDAGOGICAL_ARGS="++algorithm.pedagogical.enabled=${PEDAGOGICAL_ENABLED} \
 ++algorithm.pedagogical.gate_gamma=${PEDAGOGICAL_GATE_GAMMA} \
 ++algorithm.pedagogical.gate_kappa=${PEDAGOGICAL_GATE_KAPPA}"
 
+FULL_VOCAB_ARGS=""
+if [[ -n "$FULL_VOCAB_OBJECTIVE" && "$FULL_VOCAB_OBJECTIVE" != "none" ]]; then
+  FULL_VOCAB_ARGS="+actor_rollout_ref.rollout.full_vocab_objective=${FULL_VOCAB_OBJECTIVE} \
++actor_rollout_ref.rollout.full_vocab_topk=${FULL_VOCAB_TOPK} \
++actor_rollout_ref.rollout.full_vocab_entropy_quantile=${FULL_VOCAB_ENTROPY_QUANTILE}"
+fi
+
 TRAINER_ARGS="trainer.val_before_train=${VAL_BEFORE_TRAIN} \
 trainer.logger=[console] \
 trainer.project_name=opd_smoke \
@@ -256,7 +270,7 @@ if [[ "$MODE" == "all" || "$MODE" == "grpo" ]]; then
 algorithm.adv_estimator=grpo algorithm.grpo_outcome_weight=1.0 \
 ${DATA_ARGS} ${MODEL_ARGS} ${ACTOR_ARGS} ${ROLLOUT_ARGS} \
 reward_model.enable=False ${CUSTOM_REWARD} ${TRAINER_ARGS} \
-trainer.experiment_name=grpo_qwen35_2b trainer.default_local_dir=checkpoint/qwen35_2b_grpo; ${RAY_CLEANUP}"
+trainer.experiment_name=${GRPO_EXPERIMENT_NAME} trainer.default_local_dir=checkpoint/${GRPO_CHECKPOINT_DIR}; ${RAY_CLEANUP}"
 fi
 
 if [[ "$MODE" == "all" || "$MODE" == "opd" ]]; then
@@ -267,6 +281,7 @@ ${DATA_ARGS} ${MODEL_ARGS} ${ACTOR_ARGS} ${ROLLOUT_ARGS} \
 +actor_rollout_ref.rollout.top_k_strategy=only_stu \
 +actor_rollout_ref.rollout.reward_weight_mode=student_p \
 +actor_rollout_ref.rollout.teacher_temperature=1.0 \
+${FULL_VOCAB_ARGS} \
 reward_model.enable=True \
 +reward_model.reward_kwargs.enable_format_reward=False \
 reward_model.model.path=${TEACHER_MODEL} \
@@ -278,7 +293,7 @@ reward_model.model.fsdp_config.param_offload=True \
 +reward_model.model.attn_implementation=${ATTN_IMPLEMENTATION} \
 reward_model.micro_batch_size_per_gpu=${REWARD_MODEL_MICRO_BATCH_SIZE_PER_GPU} \
 ${CUSTOM_REWARD} ${PEDAGOGICAL_ARGS} ${TRAINER_ARGS} \
-trainer.experiment_name=opd_qwen35_2b trainer.default_local_dir=checkpoint/qwen35_2b_opd trainer.is_plot=False; ${RAY_CLEANUP}"
+trainer.experiment_name=${OPD_EXPERIMENT_NAME} trainer.default_local_dir=checkpoint/${OPD_CHECKPOINT_DIR} trainer.is_plot=False; ${RAY_CLEANUP}"
 fi
 
 echo "$LOGDIR" | tee "$ROOT/agent_notes/latest_qwen35_2b_run_dir.txt"

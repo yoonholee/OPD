@@ -28,6 +28,7 @@ from torch.distributed.tensor import DTensor
 import verl.utils.torch_functional as verl_F
 from verl import DataProto
 from verl.trainer.ppo.core_algos import agg_loss, get_policy_loss_fn, kl_penalty
+from verl.trainer.ppo.full_vocab_distill import compute_full_vocab_distill_loss
 from verl.utils.attention_utils import index_first_axis, pad_input, rearrange, unpad_input
 from verl.utils.device import get_device_id, get_device_name
 from verl.utils.fsdp_utils import FSDPModule, fsdp2_clip_grad_norm_
@@ -394,6 +395,52 @@ class DataParallelPPOActor(BasePPOActor):
 
             return entropy, log_probs, topk_ids, topk_log_probs
 
+    def _forward_full_vocab_micro_batch(
+        self, micro_batch, temperature, calculate_entropy=False
+    ) -> tuple[torch.Tensor | None, torch.Tensor, torch.Tensor]:
+        """Return sampled-token logprobs plus full-vocab logprobs on response positions.
+
+        Full-vocab OPD is a smoke/experiment path and currently assumes padded
+        tensors. The normal Qwen3/Qwen3.5 configs here set use_remove_padding=False.
+        """
+        if self.use_remove_padding:
+            raise NotImplementedError("full-vocab distillation currently requires use_remove_padding=False")
+
+        response_length = micro_batch["responses"].size(-1)
+        multi_modal_inputs = {}
+        if "multi_modal_inputs" in micro_batch.keys():
+            from verl.utils.model import extract_multi_modal_inputs
+
+            multi_modal_inputs = extract_multi_modal_inputs(micro_batch["multi_modal_inputs"])
+
+        with torch.autocast(device_type=self.device_name, dtype=torch.bfloat16):
+            input_ids = micro_batch["input_ids"]
+            attention_mask = micro_batch["attention_mask"]
+            position_ids = micro_batch["position_ids"]
+            if position_ids.dim() == 3:  # qwen2vl mrope
+                position_ids = position_ids.transpose(0, 1)
+
+            output = self.actor_module(
+                input_ids=input_ids,
+                attention_mask=attention_mask,
+                position_ids=position_ids,
+                **multi_modal_inputs,
+                use_cache=False,
+            )
+            logits = output[0] if isinstance(output, tuple) else output.logits
+            logits = logits[:, -response_length - 1 : -1, :].div(temperature)
+            full_log_probs = torch.log_softmax(logits, dim=-1)
+            log_probs = full_log_probs.gather(dim=-1, index=micro_batch["responses"].unsqueeze(-1)).squeeze(-1)
+
+            entropy = None
+            if calculate_entropy:
+                if not self.config.entropy_checkpointing:
+                    entropy = verl_F.entropy_from_logits(logits)
+                else:
+                    entropy = torch.utils.checkpoint.checkpoint(verl_F.entropy_from_logits, logits)
+
+            return entropy, log_probs, full_log_probs
+
     @GPUMemoryLogger(role="dp actor", logger=logger)
     def compute_log_probs_for_ids(self, data: DataProto) -> torch.Tensor:
         """Compute the log probability for specific token ids
@@ -753,6 +800,9 @@ class DataParallelPPOActor(BasePPOActor):
 
         if "format_mask" in data.batch.keys():
             select_keys.append("format_mask") # (bsz, 1)
+
+        if "teacher_full_log_probs" in data.batch.keys():
+            select_keys.append("teacher_full_log_probs")
         
         # Include student_top_k_log_probs if present (for top-k distillation)
         if "student_top_k_log_probs" in data.batch.keys():
@@ -787,6 +837,9 @@ class DataParallelPPOActor(BasePPOActor):
         mini_batches = data.split(self.config.ppo_mini_batch_size)
 
         on_policy = len(mini_batches) == 1 and self.config.ppo_epochs == 1
+        full_vocab_objective = data.meta_info.get("full_vocab_objective", None)
+        full_vocab_topk = data.meta_info.get("full_vocab_topk", 20)
+        full_vocab_entropy_quantile = data.meta_info.get("full_vocab_entropy_quantile", 0.5)
 
         metrics = {}
         for _ in range(self.config.ppo_epochs):
@@ -823,9 +876,14 @@ class DataParallelPPOActor(BasePPOActor):
                     if entropy_coeff != 0:
                         calculate_entropy = True
                     
+                    if full_vocab_objective:
+                        entropy, log_prob, student_full_log_probs = self._forward_full_vocab_micro_batch(
+                            model_inputs, temperature=temperature, calculate_entropy=calculate_entropy
+                        )
+                        log_prob_for_loss = log_prob
                     # Check if we have 3D advantages (top-k sampling case)
                     # If so, we need to recompute top-k log probs for correct gradient
-                    if advantages.dim() == 3:
+                    elif advantages.dim() == 3:
                         top_k = advantages.shape[-1]
                         # For union strategy, use union_top_k_ids; otherwise use student_top_k_ids
                         student_top_k_ids = None
@@ -876,33 +934,43 @@ class DataParallelPPOActor(BasePPOActor):
                             else:
                                 old_log_prob = model_inputs["old_log_probs"]
 
-                    loss_mode = self.config.policy_loss.get("loss_mode", "vanilla")
-                    # vanilla -> verl.trainer.ppo.core_algos.compute_policy_loss_vanilla
+                    if full_vocab_objective:
+                        pg_loss, pg_metrics = compute_full_vocab_distill_loss(
+                            student_log_probs=student_full_log_probs,
+                            teacher_log_probs=model_inputs["teacher_full_log_probs"],
+                            response_mask=response_mask,
+                            objective=full_vocab_objective,
+                            topk=full_vocab_topk,
+                            entropy_quantile=full_vocab_entropy_quantile,
+                        )
+                    else:
+                        loss_mode = self.config.policy_loss.get("loss_mode", "vanilla")
+                        # vanilla -> verl.trainer.ppo.core_algos.compute_policy_loss_vanilla
 
-                    # Extract pre-computed rollout correction weights if present
-                    # Weights are computed centrally in trainer and added when algorithm.rollout_is=True
-                    rollout_is_weights = model_inputs.get("rollout_is_weights", None)
+                        # Extract pre-computed rollout correction weights if present
+                        # Weights are computed centrally in trainer and added when algorithm.rollout_is=True
+                        rollout_is_weights = model_inputs.get("rollout_is_weights", None)
 
-                    # NOTE: Both mismatch diagnostic metrics (PPL, KL, etc.) and IS weight metrics
-                    # are computed centrally in ray_trainer.py for consistency and efficiency.
-                    # This ensures metrics are computed uniformly across all batches at the trainer level
-                    # and avoids redundant computation across workers and micro-batches.
+                        # NOTE: Both mismatch diagnostic metrics (PPL, KL, etc.) and IS weight metrics
+                        # are computed centrally in ray_trainer.py for consistency and efficiency.
+                        # This ensures metrics are computed uniformly across all batches at the trainer level
+                        # and avoids redundant computation across workers and micro-batches.
 
-                    # gpg -> verl.trainer.ppo.core_algos.compute_policy_loss_gpg
-                    # clip_cov -> verl.trainer.ppo.core_algos.compute_policy_loss_clip_cov
-                    policy_loss_fn = get_policy_loss_fn(loss_mode)
+                        # gpg -> verl.trainer.ppo.core_algos.compute_policy_loss_gpg
+                        # clip_cov -> verl.trainer.ppo.core_algos.compute_policy_loss_clip_cov
+                        policy_loss_fn = get_policy_loss_fn(loss_mode)
 
-                    # Compute policy loss (any function is expected to return 2 values)
-                    pg_loss, pg_metrics = policy_loss_fn(
-                        old_log_prob=old_log_prob,
-                        log_prob=log_prob_for_loss,  # 3D for top-k, 2D otherwise
-                        advantages=advantages,
-                        response_mask=response_mask,
-                        loss_agg_mode=loss_agg_mode,
-                        config=self.config,
-                        rollout_is_weights=rollout_is_weights,
-                        format_mask=format_mask,
-                    )
+                        # Compute policy loss (any function is expected to return 2 values)
+                        pg_loss, pg_metrics = policy_loss_fn(
+                            old_log_prob=old_log_prob,
+                            log_prob=log_prob_for_loss,  # 3D for top-k, 2D otherwise
+                            advantages=advantages,
+                            response_mask=response_mask,
+                            loss_agg_mode=loss_agg_mode,
+                            config=self.config,
+                            rollout_is_weights=rollout_is_weights,
+                            format_mask=format_mask,
+                        )
                     micro_batch_metrics.update(pg_metrics)
 
                     if entropy_coeff != 0:

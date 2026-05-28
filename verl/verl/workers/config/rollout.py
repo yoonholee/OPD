@@ -143,6 +143,9 @@ class RolloutConfig(BaseConfig):
     top_k_strategy: str = "only_stu"  # "only_stu", "only_tch", "intersection", or "union"
     reward_weight_mode: str = "student_p"  # "student_p", "teacher_p", or "none"
     teacher_temperature: float = 1.0  # Temperature for teacher logits (default 1.0, no scaling)
+    full_vocab_objective: Optional[str] = None
+    full_vocab_topk: int = 20
+    full_vocab_entropy_quantile: float = 0.5
 
     disable_log_stats: bool = True
 
