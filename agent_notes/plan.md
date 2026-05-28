@@ -63,7 +63,15 @@ Do not yet:
 - 4xL4 Qwen3.5-2B smoke is still blocked by stockout, not by known code errors.
 
 Next:
-- retry 4xL4 or 4xA100 when capacity is available
+- implement full-vocab/lit OPD objectives in verl if we want `reverse_kl`, `forward_kl`, `jsd`, `topk_rkl`, and `entropy_aware` comparisons inside the main stack
 - turn the temp SFT runner into a clean off-policy recipe only after one provider-stable run
 - add a real teacher-rollout SFT dataset instead of synthetic answer-string targets
-- run a small lr/batch sweep once provider capacity is stable
+- promote only the clean parts of the variant runner into recipe/launch code
+
+## OPD variant matrix, 2026-05-28
+
+- Ran current verl top-k OPD surface on GCP A100: GRPO, 15 `top_k_strategy` × `reward_weight_mode` OPD cases, ref-KL, entropy.
+- Same-model Qwen3-0.6B sanity: 18/18 rc0.
+- Qwen3-0.6B student / Qwen3-1.7B teacher: 18/18 rc0.
+- Result note: `agent_notes/verl_opd_variant_results.md`.
+- Full-vocab lagrangian/lit objectives are not yet verl trainer objectives.

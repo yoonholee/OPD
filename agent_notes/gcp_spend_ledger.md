@@ -13,7 +13,7 @@ Rules:
 - Stop new launches at $400 estimated cumulative spend until reviewed.
 - Delete or auto-delete VMs after log sync.
 
-Current conservative reserved estimate from created SFT exploration VMs: $300.
+Current conservative reserved estimate from created SFT + OPD variant VMs: $370.
 
 Runs counted:
 - `distill-sft-l4-0527-1825`: reserve $50, failed before model load, VM auto-deleted, logs synced.
@@ -23,9 +23,13 @@ Runs counted:
 - `distill-sft-a100-16step-0527-1857`: reserve $50, duplicate 3-step native SFT rc0 after a local launch-script path mistake, VM auto-deleted, logs synced.
 - `distill-sft-a100-16step-c1b-0527-1904`: reserve $50, 16-step native SFT rc0, loss 3.0021 to 0.3784, VM auto-deleted, logs synced.
 
+- `opd-variants-a100-c1b-0527-2213`: reserve $10, temp-runner root path bug, VM auto-deleted, logs synced.
+- `opd-variants2-a100-c1b-0527-2219`: reserve $10, Qwen3.5-0.8B RL init too slow for smoke, manually deleted, no live GPU left.
+- `opd-variants-qwen3-a100-c1b-0527-2228`: reserve $25, same-model Qwen3-0.6B top-k OPD matrix, 18/18 rc0, VM auto-deleted, logs synced.
+- `opd-variants-teacher17-a100-c1b-0527-2300`: reserve $25, Qwen3-0.6B student / Qwen3-1.7B teacher top-k OPD matrix, 18/18 rc0, VM auto-deleted, logs synced.
+
 Runs not counted as compute spend:
 - L4/G4/H100 stockout attempts that failed before VM creation.
 
-Known live state on 2026-05-27:
+Known live state on 2026-05-28:
 - No RUNNING GCP GPU instances in `soe-iris-gcp`.
-- One TERMINATED spot H100 instance exists: `opd-tune3-passk-g4-0527-1148` in `us-west1-a`.
