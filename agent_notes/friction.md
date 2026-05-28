@@ -67,3 +67,9 @@
 - Symptom: retry3 create failed in `us-west1-a`; retry3b failed in `us-west1-b`, both for `g2-standard-48` plus 4 L4.
 - Root cause: zonal L4 stockout, not code.
 - Workaround: use a smaller one-L4 Qwen3.5-0.8B smoke to keep debugging native SFT, then rerun 4xL4 for Qwen3.5-2B when stock returns.
+
+## 2026-05-28: local full-vocab unit tests need a torch env
+
+- Symptom: local `pytest` path lacked `pygments`, and standalone test import lacked `torch`.
+- Root cause: OPD checkout has no local torch venv.
+- Workaround: run the standalone tests inside the managed GCP env: `source .venv-qwen35-2b/bin/activate; PYTHONPATH=verl python verl/tests/trainer/ppo/test_full_vocab_distill.py`.
