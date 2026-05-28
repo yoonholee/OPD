@@ -54,6 +54,7 @@ PEDAGOGICAL_GATE_GAMMA=${PEDAGOGICAL_GATE_GAMMA:--8.0}
 PEDAGOGICAL_GATE_KAPPA=${PEDAGOGICAL_GATE_KAPPA:-1.0}
 VAL_FILES=${VAL_FILES:-"[datasets/test_data/MATH-500/test.parquet]"}
 VAL_N=${VAL_N:-8}
+VAL_MAX_SAMPLES=${VAL_MAX_SAMPLES:-}
 VAL_BEFORE_TRAIN=${VAL_BEFORE_TRAIN:-True}
 TEST_FREQ=${TEST_FREQ:-$TRAIN_STEPS}
 GRPO_EXPERIMENT_NAME=${GRPO_EXPERIMENT_NAME:-${EXPERIMENT_NAME:-grpo_qwen35_2b}}
@@ -161,6 +162,8 @@ ray start --head \$RAY_FLAGS;"
 DATA_ARGS="data.shuffle=False \
 data.train_files=datasets/local_smoke/dapo_math_train_${SMOKE_N}.parquet \
 data.val_files='${VAL_FILES}' \
+${VAL_MAX_SAMPLES:+data.val_max_samples=${VAL_MAX_SAMPLES} \
+}\
 data.train_batch_size=${TRAIN_BATCH_SIZE} \
 data.max_prompt_length=${MAX_PROMPT_LENGTH} \
 data.max_response_length=${MAX_RESPONSE_LENGTH} \
