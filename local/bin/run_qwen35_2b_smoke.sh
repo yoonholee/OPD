@@ -247,11 +247,8 @@ if [[ "$MODE" == "all" || "$MODE" == "probe" ]]; then
 fi
 
 if [[ "$MODE" == "sft" ]]; then
-  LF_VENV=${LF_VENV:-$ROOT/.venv-lf-sft}
-  LF_SFT_YAML=${LF_SFT_YAML:-$ROOT/local/qwen35_2b_smoke/qwen3_sft_smoke.yaml}
-  LF_SFT_DATA_N=${LF_SFT_DATA_N:-5000}
-  run prepare_lf_sft_data "source '$LF_VENV/bin/activate'; python local/bin/prepare_lf_sft_data.py --n '$LF_SFT_DATA_N'"
-  run lf_sft "source '$LF_VENV/bin/activate'; cd LlamaFactory && llamafactory-cli train '$LF_SFT_YAML'"
+  echo "LlamaFactory SFT path removed. Use verl native SFT."
+  exit 2
 fi
 
 if [[ "$MODE" == "all" || "$MODE" == "grpo" ]]; then

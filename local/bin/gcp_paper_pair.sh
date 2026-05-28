@@ -1,9 +1,6 @@
 #!/usr/bin/env bash
-# Launch the three-leg paper experiment on GCP H100 8x spot.
-# Leg 1: LlamaFactory SFT smoke (Qwen3-1.7B-Base on OpenThought3-Qwen3-4B slice, 100 steps).
-# Leg 2: real-reward GRPO on Qwen3-1.7B-Base (DAPO-Math, ttrl_math reward, 100 steps).
-# Leg 3: stronger-teacher OPD with Qwen3-4B-Base teacher into Qwen3-1.7B-Base student (100 steps).
-# Shared VM, separate venvs for LF (.venv-lf-sft) and verl (.venv-qwen35-2b).
+# Launch the GRPO and OPD paper probes on GCP H100 8x spot.
+# SFT moved to native verl and is not part of this legacy launcher.
 set -euo pipefail
 
 ROOT=${ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)}
@@ -46,9 +43,6 @@ export KL_LOSS_COEF=0.001
 export KL_LOSS_TYPE=low_var_kl
 export ENTROPY_COEFF=0"
 
-# Note: the LF SFT leg uses its own venv (.venv-lf-sft); the verl GRPO/OPD legs use .venv-qwen35-2b.
-# The setup_qwen35_2b_env.sh call inside gcp_qwen35_2b_l4_smoke.sh creates only the verl env;
-# we add setup_lf_sft_env.sh after that, in RUN_COMMANDS, before the SFT leg.
 export RUN_COMMANDS="
 ulimit -n 1048576 || true
 $COMMON_ENV

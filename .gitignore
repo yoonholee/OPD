@@ -12,8 +12,6 @@ wandb/
 agent_notes/gcp_runs/
 agent_notes/latest_qwen35_2b_run_dir.txt
 
-# Generated SFT data
-LlamaFactory/data/OpenThought3-4B.jsonl
 
 # Lagrangian prompt experiment raw Modal outputs.
 lagrangian_prompts/results/**
@@ -22,3 +20,6 @@ lagrangian_prompts/results/**
 lagrangian_prompts/results/phase0/**
 !lagrangian_prompts/results/phase0/pareto.png
 .DS_Store
+
+# Local throwaway architecture spikes
+_tmp/
