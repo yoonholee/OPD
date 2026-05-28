@@ -36,3 +36,34 @@
 - Four parallel B300 OPD jobs on one node can survive Ray startup but die near final validation/shutdown with `FAILED 0:15` and/or `DataLoader worker ... killed by signal: Killed`. Observed MaxRSS ~65 GB per batch process for jobs 53688-53691; only one of four completed rc0. Workaround: serialize baseline/comparison jobs or reduce validation/data-loader host-memory pressure before trusting Slurm exit state.
 
 - rsync `--exclude='checkpoint/'` (no leading slash) matches **every** `checkpoint/` directory in the tree, not just the root one. This silently nuked `verl/verl/utils/checkpoint/`, breaking `from verl.utils.checkpoint.checkpoint_manager import ...` on the Schmidt copy. Symptom: `ModuleNotFoundError: No module named 'verl.utils.checkpoint'` only on Schmidt. Same gotcha applies to `--exclude='model/'` matching `LlamaFactory/src/llamafactory/model/`, `verl/verl/trainer/config/model/`. Fix: use `--exclude='/checkpoint/'` (leading slash anchors to source root) or specifically `--exclude='./checkpoint'`. Always grep `find . -type d -name <excluded>` before running an rsync.
+
+## 2026-05-27: native verl SFT missed Qwen3.5 compat path
+
+- Symptom caught before GCP launch: `fsdp_sft_trainer.py` used `AutoModelForCausalLM` and hardcoded `flash_attention_2`, while Qwen3.5 config advertises `Qwen3_5ForConditionalGeneration`.
+- Root cause: Qwen3.5 compat shims existed in PPO/FSDP worker paths, not in the native SFT trainer path.
+- Fix: mirror the FSDP worker auto-class selection in `fsdp_sft_trainer.py` and allow `+model.attn_implementation=sdpa`.
+- Follow-up: real GCP SFT smoke must prove text-only forward works for `AutoModelForImageTextToText` with the native SFT batch.
+
+## 2026-05-27: SFT Hydra append syntax for nested dict defaults
+
+- Symptom: first GCP native SFT smoke failed before model load with `Could not override 'data.apply_chat_template_kwargs.enable_thinking'`.
+- Root cause: `apply_chat_template_kwargs` exists as an empty dict under struct mode, but `enable_thinking` does not exist inside it.
+- Fix: use `+data.apply_chat_template_kwargs.enable_thinking=False` in rendered SFT overrides.
+
+## 2026-05-27: Qwen3.5 `_no_split_modules` can be a set under FSDP2
+
+- Symptom: second GCP native SFT smoke loaded Qwen3.5, then failed in `apply_fsdp2` with `TypeError: 'set' object is not subscriptable`.
+- Root cause: FSDP2 assumed `model._no_split_modules` was list-like. Qwen3.5 returned a set of layer names.
+- Fix: normalize string, set, tuple, and ListConfig wrap policies to a list before indexing.
+
+## 2026-05-27: Qwen3.5 config has no top-level vocab size
+
+- Symptom: third native SFT smoke reached the first train step, then failed on `self.model.config.vocab_size`.
+- Root cause: Qwen3.5 conditional-generation config stores vocabulary metadata differently from plain CausalLM configs.
+- Fix: infer vocabulary width from `shift_logits.size(-1)` and use `reshape` instead of `view`.
+
+## 2026-05-27: GCP L4 stockout in us-west1-a and us-west1-b
+
+- Symptom: retry3 create failed in `us-west1-a`; retry3b failed in `us-west1-b`, both for `g2-standard-48` plus 4 L4.
+- Root cause: zonal L4 stockout, not code.
+- Workaround: use a smaller one-L4 Qwen3.5-0.8B smoke to keep debugging native SFT, then rerun 4xL4 for Qwen3.5-2B when stock returns.
